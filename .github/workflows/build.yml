@@ -20,7 +20,7 @@ jobs:
       - uses: distrho/dpf-makefile-action@v1
         with:
           target: ${{ matrix.target }}
-          extraargs: SSE_CFLAGS="" FFT_FLAG="" modapp
+          extraargs: SSE_CFLAGS="" FFT_FLAG="" lv2
           lto: false
           pawpaw: true
 
@@ -38,7 +38,7 @@ jobs:
       - uses: ./.github/actions
         with:
           target: ${{ matrix.target }}
-          extraargs: modapp
+          extraargs: lv2
           pawpaw: true
 
   linux-optimised:
@@ -56,7 +56,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           postfix: -v3
-          extraargs: modapp
+          extraargs: lv2
           lto: false
           pawpaw: true
 
@@ -94,7 +94,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           postfix: -v3
-          extraargs: modapp
+          extraargs: lv2
           pawpaw: true
 
   windows:
@@ -111,7 +111,7 @@ jobs:
       - uses: ./.github/actions
         with:
           target: ${{ matrix.target }}
-          extraargs: SSE_CFLAGS="" FFT_FLAG="" modapp
+          extraargs: SSE_CFLAGS="" FFT_FLAG="" lv2
           pawpaw: true
 
   windows-standalone:
