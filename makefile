@@ -7,7 +7,7 @@ SWITCHGOAL := all modapp standalone lv2 jack
 
 PASS := features 
 
-SUBDIR := Ratatouille
+SUBDIR := NeuralRack
 
 .PHONY: $(SUBDIR) libxputty  recurse
 
@@ -28,13 +28,13 @@ endif
 libxputty: check-and-reinit-submodules
 ifeq (,$(filter $(NOGOAL),$(MAKECMDGOALS)))
 ifeq (,$(wildcard ./libxputty/xputty/resources/texture.png))
-	@cp ./Ratatouille/resources/*.png ./libxputty/xputty/resources/
+	@cp ./NeuralRack/resources/*.png ./libxputty/xputty/resources/
 endif
 	@exec $(MAKE) --no-print-directory -j 1 -C $@ $(MAKECMDGOALS)
 endif
 ifneq (,$(filter $(SWITCHGOAL),$(MAKECMDGOALS)))
 ifeq (,$(wildcard ./libxputty/xputty/resources/texture.png))
-	@cp ./Ratatouille/resources/*.png ./libxputty/xputty/resources/
+	@cp ./NeuralRack/resources/*.png ./libxputty/xputty/resources/
 endif
 	@exec $(MAKE) --no-print-directory -j 1 -C $@ all
 endif
@@ -51,5 +51,6 @@ clean:
 	@rm -f ./libxputty/xputty/resources/neuraldir.png
 	@rm -f ./libxputty/xputty/resources/norm.png
 	@rm -f ./libxputty/xputty/resources/eject.png
+	@rm -f ./libxputty/xputty/resources/exit_.png
 
 features:

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=0.2
+Type=Application
+Name=NeuralRack
+Comment=Neural Model loader for Jack Audio Connection Kit
+Exec=Neuralrack
+Icon=NeuralRack
+Categories=AudioVideo;Audio;
+Terminal=false
+X-NSM-Capable=false
+X-NSM-Exec=Neuralrack
+Name[de_DE]=NeuralRack
