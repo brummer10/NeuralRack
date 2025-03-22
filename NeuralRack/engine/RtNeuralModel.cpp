@@ -36,7 +36,7 @@ inline void RtNeuralModel::init(unsigned int sample_rate)
     clearState();
     isInited = true;
     ramp = 0.0;
-    ramp_step = 512;
+    ramp_step = 256.0;
     ramp_down = ramp_step;
     ramp_div = 1.0/ramp_step;
     loadModel();

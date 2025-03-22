@@ -57,7 +57,7 @@ public:
         set_custom_theme(ui);
         ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, 610, 510);
         widget_set_title(ui->win, "NeuralRack");
-        widget_set_icon_from_png(ui->win,LDVAR(neuraldir_png));
+        widget_set_icon_from_png(ui->win,LDVAR(NeuralRack_png));
         ui->win->parent_struct = ui;
         plugin_create_controller_widgets(ui,"standalone");
         widget_show_all(ui->win);
@@ -427,7 +427,7 @@ private:
     // timeout loop to check output ports from engine
     void checkEngine() {
         // come back later
-        if (processCounter < 2) {
+        if (processCounter < 3) {
             processCounter++;
             return;
         }

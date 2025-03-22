@@ -66,8 +66,8 @@ nrack:irfile1
    opts:supportedOption bufsz:maxBlockLength ;
    lv2:extensionData work:interface ,
                     state:interface ;
-   lv2:minorVersion 9 ;
-   lv2:microVersion 9 ;
+   lv2:minorVersion 1 ;
+   lv2:microVersion 1 ;
 
 guiext:ui <urn:brummer:neuralrack_ui> ;
 
@@ -78,14 +78,14 @@ patch:writable nrack:irfile ;
 patch:writable nrack:irfile1 ;
 
 rdfs:comment """
-A Neural Model loader and mixer. Supports *.nam, *.aidax and *.json based model files.
-Neuralrack allow to load up to two model files and mix there output to archive the wanted sound.
-The input could be controlled separate for each model.
-It provide a delta delay control to overcome possible phasing issues between the models in use. 
-Additional it allow to load up to two Impulse Response files and mix them as well.
-Neuralrack using parallel processing to process the second slot, that reduce the CPU load.
-It provide a additional buffered Mode which introduce a one frame latency 
-and moves the complete processing into a background thread, that reduce the CPU load even more. 
+Neuralrack is a Neural Model loader with support for *.nam, *.aidax and *.json based model files.
+Neuralrack allow to load up to two model files and run them serial.
+The input/output could be controlled separate for each model.
+For tone sharping a 6 band EQ could be enabled.
+Additional it allow to load up a separate Impulse Response file for each output channel (stereo).
+Neuralrack provide a buffered Mode which introduce a one frame latency when enabled.
+It moves the complete processing into a background thread. That will reduce the CPU load when needed.
+The resulting latency will be reported to the host so that it could be compensated.
 """;
 
 
