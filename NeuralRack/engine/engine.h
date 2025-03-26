@@ -181,6 +181,7 @@ inline Engine::Engine() :
     conv(),
     conv1(),
     bufferoutput0(NULL),
+    bufferoutput1(NULL),
     bufferinput0(NULL),
     _bufb(0) {
         xrworker.start();
