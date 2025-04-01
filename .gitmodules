@@ -1,12 +1,9 @@
 [submodule "libxputty"]
 	path = libxputty
 	url = https://github.com/brummer10/libxputty.git
-[submodule "RTNeural"]
-	path = RTNeural
-	url = https://github.com/jatinchowdhury18/RTNeural.git
-[submodule "NeuralAmpModelerCore"]
-	path = NeuralAmpModelerCore
-	url = https://github.com/sdatkinson/NeuralAmpModelerCore.git
 [submodule "FFTConvolver"]
 	path = FFTConvolver
 	url = https://github.com/HiFi-LoFi/FFTConvolver.git
+[submodule "NeuralAudio"]
+	path = NeuralAudio
+	url = https://github.com/mikeoliphant/NeuralAudio.git

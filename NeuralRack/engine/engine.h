@@ -37,7 +37,7 @@
 #include "dcblocker.cc"
 #include "eq.cc"
 
-#include "ModelerSelector.h"
+#include "NeuralModelLoader.h"
 #include "fftconvolver.h"
 
 #pragma once
@@ -91,8 +91,8 @@ class Engine
 {
 public:
     ParallelThread               xrworker;
-    ModelerSelector              slotA;
-    ModelerSelector              slotB;
+    NeuralModelLoader              slotA;
+    NeuralModelLoader              slotB;
     ConvolverSelector            conv;
     ConvolverSelector            conv1;
     eq::Dsp*                     peq;
@@ -162,9 +162,11 @@ private:
 
     inline void processConv1();
     inline void processBuffer();
+    inline void processSlotB(float* output);
+    inline void processBufferedSlotB();
     inline void processDsp(uint32_t n_samples, float* output, float* output1);
 
-    inline void setModel(ModelerSelector *slot,
+    inline void setModel(NeuralModelLoader *slot,
                 std::string *file, std::atomic<bool> *set);
 
     inline void setIRFile(ConvolverSelector *co, std::string *file);
@@ -257,7 +259,8 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
 
     par.setThreadName("RT-BUF");
     par.setPriority(rt_prio, rt_policy);
-    par.set<Engine, &Engine::processBuffer>(this);
+    par.set<0,Engine, &Engine::processBuffer>(this);
+    par.set<1,Engine, &Engine::processBufferedSlotB>(this);
 
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec0[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec3[l0] = 0.0;
@@ -278,7 +281,7 @@ void Engine::clean_up()
     // delete the internal DSP mem
 }
 
-inline void Engine::setModel(ModelerSelector *slot,
+inline void Engine::setModel(NeuralModelLoader *slot,
                 std::string *file, std::atomic<bool> *set) {
     if ((*file).compare(slot->getModelFile()) != 0) {
         slot->setModelFile(*file);
@@ -369,6 +372,40 @@ inline void Engine::processBuffer() {
     processDsp(bufsize, bufferoutput0, bufferoutput1);
 }
 
+// process slotB
+inline void Engine::processSlotB(float* output) {
+    double fSlow4 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(inputGain1));
+    double fSlow2 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(outputGain1));
+    // process input volume slot B
+    if (_neuralB.load(std::memory_order_acquire)) {
+        for (uint32_t i0 = 0; i0 < bufsize; i0 = i0 + 1) {
+            fRec4[0] = fSlow4 + 0.999 * fRec4[1];
+            output[i0] = float(double(output[i0]) * fRec4[0]);
+            fRec4[1] = fRec4[0];
+        }
+    }
+
+    // process slot B
+    if (_neuralB.load(std::memory_order_acquire)) {
+        slotB.compute(bufsize, output, output);
+        if (normSlotB) slotB.normalize(bufsize, output);
+    }
+
+    // process output volume slot B
+    if (_neuralB.load(std::memory_order_acquire)) {
+        for (uint32_t i0 = 0; i0 < bufsize; i0 = i0 + 1) {
+            fRec2[0] = fSlow2 + 0.999 * fRec2[1];
+            output[i0] = float(double(output[i0]) * fRec2[0]);
+            fRec2[1] = fRec2[0];
+        }
+    }
+}
+
+// process slotB in buffered in a background thread
+inline void Engine::processBufferedSlotB() {
+    processSlotB(bufferoutput0);
+}
+
 inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1)
 {
     if(n_samples<1) return;
@@ -382,9 +419,7 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
 
     // get controller values from host
     double fSlow0 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(inputGain));
-    double fSlow4 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(inputGain1));
     double fSlow3 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(outputGain));
-    double fSlow2 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(outputGain1));
     double fSlow1 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(IRoutputGain));
     double fSlow5 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(IRoutputGain1));
 
@@ -416,28 +451,40 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     if (eqOnOff)
         peq->compute(n_samples, output, output);
 
-    // process input volume slot B
-    if (_neuralB.load(std::memory_order_acquire)) {
-        for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
-            fRec4[0] = fSlow4 + 0.999 * fRec4[1];
-            output[i0] = float(double(output[i0]) * fRec4[0]);
-            fRec4[1] = fRec4[0];
+    if ((buffered == 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
+        // avoid buffer overflow on frame size change
+        if (buffersize < n_samples) {
+            bufsize = n_samples;
+            bufferIsInit.store(false, std::memory_order_release);
+            _execute.store(true, std::memory_order_release);
+            xrworker.runProcess();
+            return;
         }
-    }
-
-    // process slot B
-    if (_neuralB.load(std::memory_order_acquire)) {
-        slotB.compute(n_samples, output, output);
-        if (normSlotB) slotB.normalize(n_samples, output);
-    }
-
-    // process output volume slot B
-    if (_neuralB.load(std::memory_order_acquire)) {
-        for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
-            fRec2[0] = fSlow2 + 0.999 * fRec2[1];
-            output[i0] = float(double(output[i0]) * fRec2[0]);
-            fRec2[1] = fRec2[0];
+        par.setProcessor(1);
+        // get the buffer from previous process
+        if (!par.processWait()) {
+            XrunCounter += 1;
+            _notify_ui.store(true, std::memory_order_release);
         }
+        // copy incoming data to internal input buffer
+        memcpy(bufferinput0, output, n_samples*sizeof(float));
+
+        bufsize = n_samples;
+        // copy processed data from last circle to output
+        memcpy(output, bufferoutput0, bufsize*sizeof(float));
+        // copy internal input buffer to process buffer for next circle
+        memcpy(bufferoutput0, bufferinput0, bufsize*sizeof(float));
+
+        // process data in background thread
+        if (par.getProcess()) par.runProcess();
+        else {
+            XrunCounter += 1;
+            _notify_ui.store(true, std::memory_order_release);
+        }
+        latency = n_samples;
+    } else {
+        processSlotB(output);
+        if (!buffered) latency = 0.0;
     }
 
     // run dcblocker
@@ -495,8 +542,9 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
 
 inline void Engine::process(uint32_t n_samples, float* output, float* output1) {
     // process in buffered mode
-    if ((buffered > 0.0) && bufferIsInit.load(std::memory_order_acquire)) {
+    if ((buffered > 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
         // avoid buffer overflow on frame size change
+        par.setProcessor(0);
         if (buffersize < n_samples) {
             bufsize = n_samples;
             bufferIsInit.store(false, std::memory_order_release);
@@ -530,7 +578,7 @@ inline void Engine::process(uint32_t n_samples, float* output, float* output1) {
     } else {
         // process latency free
         processDsp(n_samples, output, output1);
-        latency = 0.0;
+        if (!buffered) latency = 0.0;
     }
 }
 

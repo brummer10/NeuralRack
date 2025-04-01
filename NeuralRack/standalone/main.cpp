@@ -21,6 +21,7 @@
 #include "xpa.h"
 #endif
 
+
 #include "NeuralRack.cc"
 
 NeuralRack *r;
@@ -28,7 +29,6 @@ NeuralRack *r;
 #if defined(HAVE_JACK)
 #include "jack.cc"
 #endif
-
 
 // send value changes from GUI to the engine
 void sendValueChanged(X11_UI *ui, int port, float value) {

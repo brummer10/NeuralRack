@@ -154,15 +154,21 @@ endif
 	DESKAPPS_DIR ?= $(SHARE_DIR)/applications/
 	PIXMAPS_DIR ?= $(SHARE_DIR)/pixmaps/
 
-	RTN_DIR := ../RTNeural/RTNeural/
-	RTN_DEPEND_DIR := ../RTNeural/modules/
-	RTN_SOURCES := $(wildcard $(RTN_DIR)*.cpp)
-	RTN_OBJ := $(patsubst %.cpp,%.o,$(RTN_SOURCES))
-	RTN_INCLUDES := -I$(RTN_DIR) -I$(RTN_DEPEND_DIR)Eigen/ -I./ -I$(RTN_DEPEND_DIR)json/ 
-	RTN_LIB := librtneural.$(STATIC_LIB_EXT)
+	NEURALAUDIO_DIR := ../NeuralAudio/NeuralAudio/
+	NEURALAUDIO_DEP_DIR := ../NeuralAudio/deps/
+	NEURALAUDIO_SOURCES := $(wildcard $(NEURALAUDIO_DIR)*.cpp)
+	NEURALAUDIO_SOURCES += $(wildcard $(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.cpp)
+	NEURALAUDIO_OBJ := $(patsubst %.cpp,%.o,$(NEURALAUDIO_SOURCES))
+	NEURALAUDIO_INCLUDES := -I$(NEURALAUDIO_DIR) -I$(NEURALAUDIO_DEP_DIR)RTNeural/ -I./ \
+	-I$(NEURALAUDIO_DEP_DIR)math_approx/include/ -I$(NEURALAUDIO_DEP_DIR) \
+	-I$(NEURALAUDIO_DEP_DIR)NeuralAmpModelerCore/Dependencies/nlohmann/ \
+	-I$(NEURALAUDIO_DEP_DIR)NeuralAmpModelerCore/Dependencies/eigen
+	NEURALAUDIO_LIB := libneuralaudio.$(STATIC_LIB_EXT)
 
 	ENGINE_DIR := ./engine/
 	ENGINE_INCLUDE := -I./engine/
+
+	MODEL_LOADER := $(ENGINE_DIR)NeuralModelLoader.cpp
 
 	LV2_DIR := ./lv2/
 	LV2_INCLUDE := -I./lv2/
@@ -178,20 +184,6 @@ endif
 	LV2_PLUGIN := $(LV2_DIR)$(NAME)
 	LV2_GUI := $(GUI_DIR)$(NAME)
 
-	NAM_DIR := ../NeuralAmpModelerCore/NAM/
-	NAM_DEPEND_DIR := ../NeuralAmpModelerCore/Dependencies/
-	NAM_SOURCES := $(wildcard $(NAM_DIR)*.cpp)
-	NAM_OBJ := $(patsubst %.cpp,%.o,$(NAM_SOURCES))
-	NAM_INCLUDES := -I$(NAM_DIR) -I$(NAM_DEPEND_DIR)eigen/ -I./ -I$(NAM_DEPEND_DIR)nlohmann/
-	NAM_LIB := libnam.$(STATIC_LIB_EXT)
-
-	MODELER_SOURCES := $(ENGINE_DIR)RtNeuralModel.cpp $(ENGINE_DIR)NeuralModel.cpp
-	MODELER_OBJ := $(patsubst %.cpp,%.o,$(MODELER_SOURCES))
-	MODELER_LIB := libmodeler.$(STATIC_LIB_EXT)
-
-	NEURAL_OBJ := $(NAM_OBJ) $(RTN_OBJ) $(MODELER_OBJ)
-	NEURAL_LIB := libneural.$(STATIC_LIB_EXT)
-
 	CONV_DIR := ../FFTConvolver/
 	CONV_SOURCES :=  $(wildcard $(CONV_DIR)*.cpp)
 	CONV_SOURCES += ./engine/fftconvolver.cpp
@@ -205,7 +197,7 @@ endif
 
 	GUIIMPL_SOURCE := $(LV2_DIR)lv2_plugin.cc $(GUI_DIR)widgets.cc
 
-	DEPS = $NEURAL_OBJ:%.o=%.d) $(CONV_OBJ:%.o=%.d) $(RESAMP_OBJ:%.o=%.d) NeuralRack.d
+	DEPS = $NEURAL_OBJ:%.o=%.d) $(CONV_OBJ:%.o=%.d) $(RESAMP_OBJ:%.o=%.d) Neuralrack.d
 
 ifeq (,$(filter clean,$(MAKECMDGOALS)))
 ifeq (,$(filter install,$(MAKECMDGOALS)))
@@ -352,22 +344,13 @@ endif
 
 -include $(DEPS)
 
-$(RTN_OBJ): $(RTN_SOURCES)
+$(NEURALAUDIO_OBJ): $(NEURALAUDIO_SOURCES)
 	@$(ECHO) "Building object file $@ $(reset)"
-	$(QUIET)$(CXX) $(CXXFLAGS) -MMD -Wall -c $(patsubst %.o,%.cpp,$@) -o $@ $(RTN_INCLUDES)
+	$(QUIET)$(CXX) $(CXXFLAGS) -DWAVENET_FRAMES=128 -MMD -Wall -Wno-unused-private-field -Wno-reorder-ctor -Wno-infinite-recursion -c $(patsubst %.o,%.cpp,$@) -o $@ $(NEURALAUDIO_INCLUDES)
 
-$(RTN_LIB): $(RTN_OBJ)
+$(NEURALAUDIO_LIB): $(NEURALAUDIO_OBJ)
 	@$(B_ECHO) "Build static library $@ $(reset)"
-	$(QUIET)$(AR) rcs $(RTN_LIB) $(RTN_OBJ)
-	@$(B_ECHO) "=================== DONE =======================$(reset)"
-
-$(NAM_OBJ): $(NAM_SOURCES)
-	@$(ECHO) "Building object file $@ $(reset)"
-	$(QUIET)$(CXX) $(CXXFLAGS) -MMD -Wall -c $(patsubst %.o,%.cpp,$@) -o $@  $(NAM_INCLUDES)
-
-$(NAM_LIB): $(NAM_OBJ)
-	@$(B_ECHO) "Build static library $@ $(reset)"
-	$(QUIET)$(AR) rcs $(NAM_LIB) $(NAM_OBJ)
+	$(QUIET)$(AR) rcs $(NEURALAUDIO_LIB) $(NEURALAUDIO_OBJ)
 	@$(B_ECHO) "=================== DONE =======================$(reset)"
 
 $(CONV_OBJ): $(CONV_SOURCES)
@@ -407,18 +390,18 @@ $(EXEC_NAME)_ui.$(LIB_EXT): $(LV2_GUI).c $(GUIIMPL_SOURCE) $(UI_LIB)
 	$(QUIET)$(CC) $(CFLAGS) $(LV2_GUI).c -L. $(UI_LIB) -o $@ $(LDFLAGS) $(GUI_LDFLAGS) -I./ $(LV2_INCLUDE)
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME)_ui.$(LIB_EXT)
 
-$(EXEC_NAME).$(LIB_EXT): $(LV2_PLUGIN).cpp $(NEURAL_LIB) $(CONV_LIB) $(RESAMP_LIB)
+$(EXEC_NAME).$(LIB_EXT): $(LV2_PLUGIN).cpp $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(MODEL_LOADER)
 	@$(B_ECHO) "Compiling $(EXEC_NAME).$(LIB_EXT) $(reset)"
-	$(QUIET)$(CXX) $(CXXFLAGS) $(NAM_INCLUDES) $(RTN_INCLUDES) $(ENGINE_INCLUDE) $(LV2_INCLUDE) $(LV2_PLUGIN).cpp  \
-	-L. $(NEURAL_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(LDFLAGS) -o $(EXEC_NAME).$(LIB_EXT)
+	$(QUIET)$(CXX) $(CXXFLAGS) $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(LV2_INCLUDE) $(LV2_PLUGIN).cpp  \
+	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(LDFLAGS) -o $(EXEC_NAME).$(LIB_EXT)
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME).$(LIB_EXT)
 
-$(EXEC_NAME)$(EXE_EXT): $(NEURAL_LIB) $(CONV_LIB) $(RESAMP_LIB) $(UI_LIB) $(STANDALONE_UI_SOURCES) $(STANDALONE).cpp
+$(EXEC_NAME)$(EXE_EXT): $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(UI_LIB) $(STANDALONE_UI_SOURCES) $(STANDALONE).cpp $(MODEL_LOADER)
 ifneq ($(JACKFLAGS), )
 	@$(B_ECHO) "Compiling $@ $(reset)"
-	$(QUIET)$(CXX) $(CXXFLAGS) $(NAM_INCLUDES) $(RTN_INCLUDES) $(ENGINE_INCLUDE) \
-	$(STANDALONE_INCLUDE) $(JACKFLAGS) $(STANDALONE).cpp -L. $(UI_LIB) \
-	-L. $(NEURAL_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(JACKLDFLAGS) -o $@
+	$(QUIET)$(CXX) $(CXXFLAGS) $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) \
+	$(STANDALONE_INCLUDE) $(JACKFLAGS) $(MODEL_LOADER) $(STANDALONE).cpp -L. $(UI_LIB) \
+	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(JACKLDFLAGS) -o $@
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME)$(EXE_EXT)
 endif
 
@@ -440,7 +423,7 @@ ifneq ("$(wildcard ../bin/$(EXEC_NAME)$(EXE_EXT))","")
 
   ifeq ($(user),root)
 	$(QUIET)mkdir -p $(DESTDIR)$(DESKAPPS_DIR)
-	$(QUIET)cp $(STANDALONE_DIR)$(EXEC_NAME).desktop $(DESTDIR)$(DESKAPPS_DIR)$(EXEC_NAME).desktop
+	$(QUIET)cp $(STANDALONE_DIR)$(EXEC_NAME).desktop $(DESTDIR)$(DESKAPPS_DIR)$(NAME).desktop
 	$(QUIET)mkdir -p $(DESTDIR)$(PIXMAPS_DIR)
 	$(QUIET)cp $(STANDALONE_DIR)$(EXEC_NAME).svg $(DESTDIR)$(PIXMAPS_DIR)$(EXEC_NAME).svg 
 	$(QUIET)update-desktop-database || true
@@ -476,8 +459,9 @@ endif
 	$(QUIET)rm -f *.a  *.lib *.o *.d *.so *.dll $(EXEC_NAME) $(EXEC_NAME).exe
 	$(QUIET)rm -f $(RESAMP_DIR)*.a $(RESAMP_DIR)*.lib $(RESAMP_DIR)*.o $(RESAMP_DIR)*.d
 	$(QUIET)rm -f $(CONV_DIR)*.a $(CONV_DIR)*.lib $(CONV_DIR)*.o $(CONV_DIR)*.d
-	$(QUIET)rm -f $(NAM_DIR)*.a $(NAM_DIR)*.lib $(NAM_DIR)*.o $(NAM_DIR)*.d
-	$(QUIET)rm -f $(RTN_DIR)*.a $(RTN_DIR)*.lib $(RTN_DIR)*.o $(RTN_DIR)*.d
+	$(QUIET)rm -f $(NEURALAUDIO_DIR)*.a $(NEURALAUDIO_DIR)*.lib $(NEURALAUDIO_DIR)*.o $(NEURALAUDIO_DIR)*.d
+	$(QUIET)rm -f $(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.a $(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.lib \
+	$(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.o $(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.d
 	$(QUIET)rm -f $(ENGINE_DIR)*.a $(ENGINE_DIR)*.lib $(ENGINE_DIR)*.o $(ENGINE_DIR)*.d
 	$(QUIET)rm -rf ../bin
 

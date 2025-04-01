@@ -176,7 +176,8 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     asprintf(&ps->ir1.filepicker->filter ,"%s", ".wav");
     ps->ir1.filepicker->use_filter = 1;
 
-    ui->widget[15] = add_lv2_switch (ui->widget[15], ui->win, 20, "Buffer", ui, 50,  12, 40, 40);
+    ui->widget[15] = add_lv2_slider (ui->widget[15], ui->win, 20, "Buffer", ui, 50,  12, 40, 40);
+    set_adjustment(ui->widget[15]->adj, 0.0, 0.0, 0.0, 2.0, 1.0, CL_CONTINUOS);
 
     ui->widget[16] = add_lv2_label (ui->widget[16], ui->win, 22, "Latency", ui, 90,  22, 130, 30);
     ui->widget[17] = add_lv2_label (ui->widget[17], ui->win, 23, "Xrun", ui, 410,  22, 100, 30);

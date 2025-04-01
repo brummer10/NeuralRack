@@ -281,12 +281,12 @@ The resulting latency will be reported to the host so that it could be compensat
       a lv2:InputPort ,
           lv2:ControlPort ;
       lv2:index 20 ;
-      lv2:portProperty lv2:toggled ;
+      lv2:portProperty lv2:integer ;
       lv2:symbol "buffered" ;
       lv2:name "Buffered" ;
-      lv2:default 0.0 ;
-      lv2:minimum 0.0 ;
-      lv2:maximum 1.0 ;
+      lv2:default 0 ;
+      lv2:minimum 0 ;
+      lv2:maximum 2 ;
    ], [
       a lv2:AudioPort ,
            lv2:OutputPort ;

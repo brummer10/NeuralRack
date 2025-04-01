@@ -1,5 +1,5 @@
 /*
- * RtNeuralModel.cc
+ * NeuralModelLoader.cc
  *
  * SPDX-License-Identifier:  BSD-3-Clause
  *
@@ -7,13 +7,16 @@
  */
 
 
-#include "ModelerSelector.h"
+#include "NeuralModelLoader.h"
 
 
 namespace neuralrack {
 
-RtNeuralModel::RtNeuralModel(std::condition_variable *Sync)
-    : rawModel(nullptr), model(nullptr), smp(), SyncWait(Sync) {
+NeuralModelLoader::NeuralModelLoader(std::condition_variable *Sync)
+    : model(nullptr), smp(), SyncWait(Sync) {
+    NeuralAudio::NeuralModel::SetDefaultMaxAudioBufferSize(4096);
+    loudness = 0.0;
+    nGain = 1.0;
     needResample = 0;
     phaseOffset = 0;
     isInited = false;
@@ -22,16 +25,15 @@ RtNeuralModel::RtNeuralModel(std::condition_variable *Sync)
     do_ramp_down.store(false, std::memory_order_release);
 }
 
-RtNeuralModel::~RtNeuralModel() {
-    if (model != nullptr) model.reset(nullptr);
+NeuralModelLoader::~NeuralModelLoader() {
+    if (model != nullptr) delete model;
 }
 
-inline void RtNeuralModel::clearState()
-{
+void NeuralModelLoader::clearState() {
+
 }
 
-inline void RtNeuralModel::init(unsigned int sample_rate)
-{
+void NeuralModelLoader::init(unsigned int sample_rate) {
     fSampleRate = sample_rate;
     clearState();
     isInited = true;
@@ -43,65 +45,68 @@ inline void RtNeuralModel::init(unsigned int sample_rate)
 }
 
 // connect the Ports used by the plug-in class
-void RtNeuralModel::connect(uint32_t port,void* data)
-{
+void NeuralModelLoader::connect(uint32_t port,void* data) {
+
 }
 
-inline std::string RtNeuralModel::getModelFile() {
+std::string NeuralModelLoader::getModelFile() {
     return modelFile;
 }
 
-int RtNeuralModel::getPhaseOffset()
-{
+void NeuralModelLoader::setModelFile(std::string modelFile_) {    
+    modelFile = modelFile_;
+}
+
+void NeuralModelLoader::normalize(int count, float *buf) {
+    if (!model) return;
+    if (nGain != 1.0) {
+        for (int i0 = 0; i0 < count; i0 = i0 + 1) {
+            buf[i0] = float(double(buf[i0]) * nGain);
+        }
+    }
+}
+
+int NeuralModelLoader::getPhaseOffset() {
     return phaseOffset;
 }
 
-inline void RtNeuralModel::normalize(int count, float *buf)
-{
-    // not implemented
-}
-
-inline void RtNeuralModel::compute(int count, float *input0, float *output0)
-{
+void NeuralModelLoader::compute(int count, float *input0, float *output0) {
     if (output0 != input0)
         memcpy(output0, input0, count*sizeof(float));
 
-    //process model 
+    // process model
     if (model && ready.load(std::memory_order_acquire)) {
 
-        float bufa[count];
-        memcpy(bufa, output0, count*sizeof(float));
+        float buf[count];
+        memcpy(buf, output0, count*sizeof(float));
 
-        if (needResample) {
+        if (needResample ) {
             int ReCounta = count;
             if (needResample == 1) {
                 ReCounta = smp.max_out_count(count);
             } else if (needResample == 2) {
                 ReCounta = static_cast<int>(ceil((count*static_cast<double>(modelSampleRate))/fSampleRate));
             }
-            float bufa1[ReCounta];
-            memset(bufa1, 0, ReCounta*sizeof(float));
+            float buf1[ReCounta];
+            memset(buf1, 0, ReCounta*sizeof(float));
             if (needResample == 1) {
-                ReCounta = smp.up(count, bufa, bufa1);
+                ReCounta = smp.up(count, buf, buf1);
             } else if (needResample == 2) {
-                smp.down(bufa, bufa1);
+                smp.down(buf, buf1);
             } else {
-                memcpy(bufa1, bufa, ReCounta * sizeof(float));
+                memcpy(buf1, buf, ReCounta * sizeof(float));
             }
-            for (int i0 = 0; i0 < ReCounta; i0 = i0 + 1) {
-                 bufa1[i0] = model->forward (&bufa1[i0]);
-            }
+            model->Process(buf1, buf1, ReCounta);
+
             if (needResample == 1) {
-                smp.down(bufa1, bufa);
+                smp.down(buf1, buf);
             } else if (needResample == 2) {
-                smp.up(ReCounta, bufa1, bufa);
+                smp.up(ReCounta, buf1, buf);
             }
         } else {
-            for (int i0 = 0; i0 < count; i0 = i0 + 1) {
-                 bufa[i0] = model->forward (&bufa[i0]);
-            }
+            model->Process(buf, buf, count);
         }
-        memcpy(output0, bufa, count*sizeof(float));
+        memcpy(output0, buf, count*sizeof(float));
 
         if (do_ramp.load(std::memory_order_acquire)) {
             for (int i = 0; i < count; i++) {
@@ -127,58 +132,42 @@ inline void RtNeuralModel::compute(int count, float *input0, float *output0)
     }
 }
 
-void RtNeuralModel::get_samplerate(std::string config_file, int *mSampleRate) {
-    std::ifstream infile(config_file);
-    infile.imbue(std::locale::classic());
-    std::string line;
-    std::string key;
-    std::string value;
-    if (infile.is_open()) {
-        while (std::getline(infile, line)) {
-            std::istringstream buf(line);
-            buf >> key;
-            buf >> value;
-            if (key.compare("\"samplerate\":") == 0) {
-                value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-                (*mSampleRate) = std::stoi(value);
-                break;
-            }
-            key.clear();
-            value.clear();
-        }
-        infile.close();
-    }
-}
-
 // non rt callback
-bool RtNeuralModel::loadModel() {
+bool NeuralModelLoader::loadModel() {
     if (!modelFile.empty() && isInited) {
         if (model) {
             do_ramp_down.store(true, std::memory_order_release);
             std::unique_lock<std::mutex> lkr(WMutex);
-            SyncIntern.wait_for(lkr, std::chrono::milliseconds(30));
+            SyncIntern.wait_for(lkr, std::chrono::milliseconds(60));
         }
-       // fprintf(stderr, "Load file %s\n", modelFile.c_str());
-        std::unique_lock<std::mutex> lk(WMutex);
+        //fprintf(stderr, "Load file %s\n", modelFile.c_str());
         ready.store(false, std::memory_order_release);
+        std::unique_lock<std::mutex> lk(WMutex);
         SyncWait->wait_for(lk, std::chrono::milliseconds(60));
-        if (model != nullptr) model.reset(nullptr);
+        if (model != nullptr) {
+            delete model;
+            model = nullptr;
+        }
        // fprintf(stderr, "delete model\n");
-        modelSampleRate = 0;
         needResample = 0;
         phaseOffset = 0;
         //clearState();
         int32_t warmUpSize = 4096;
         try {
-            get_samplerate(std::string(modelFile), &modelSampleRate);
-            std::ifstream jsonStream(std::string(modelFile), std::ifstream::binary);
-            model = std::move(RTNeural::json_parser::parseJson<float>(jsonStream));
+            model = NeuralAudio::NeuralModel::CreateFromFile(std::string(modelFile));
         } catch (const std::exception&) {
             modelFile = "None";
         }
         
         if (model) {
-            model->reset();
+            //fprintf(stderr, "load model %s\n", modelFile.c_str());
+            if (model->GetRecommendedOutputDBAdjustment()) {
+                loudness = model->GetRecommendedOutputDBAdjustment();
+                nGain = pow(10.0, (-6.0 - loudness) / 20.0);
+            } else {
+                nGain = 1.0;
+            }
+            modelSampleRate = static_cast<int>(model->GetSampleRate());
             if (modelSampleRate <= 0) modelSampleRate = 48000;
             if (modelSampleRate > fSampleRate) {
                 smp.setup(fSampleRate, modelSampleRate);
@@ -186,9 +175,7 @@ bool RtNeuralModel::loadModel() {
             } else if (modelSampleRate < fSampleRate) {
                 smp.setup(modelSampleRate, fSampleRate);
                 needResample = 2;
-            } 
-            // fprintf(stderr, "A: %s\n", modelFile.c_str());
-
+            }
             float* buffer = new float[warmUpSize];
             memset(buffer, 0, warmUpSize * sizeof(float));
             float angle = 0.0;
@@ -197,9 +184,7 @@ bool RtNeuralModel::loadModel() {
                 angle += (2 * 3.14159365) / 2048;
             }
 
-            for (int i0 = 0; i0 < warmUpSize; i0 = i0 + 1) {
-                buffer[i0] = model->forward (&buffer[i0]);
-            }
+            model->Process(buffer, buffer, warmUpSize);
 
             for(int i=0;i<2048;i++){
                 if (!std::signbit(buffer[i+1]) != !std::signbit(buffer[i])) {
@@ -209,7 +194,11 @@ bool RtNeuralModel::loadModel() {
             }
 
             delete[] buffer;
-        } 
+            model->Prewarm();
+            //fprintf(stderr, "sample rate = %i file = %i l = %f\n",fSampleRate, modelSampleRate, loudness);
+            //fprintf(stderr, "%s\n", load_file.c_str());
+        }
+        ramp = 0.0;
         ready.store(true, std::memory_order_release);
         do_ramp.store(true, std::memory_order_release);
         do_ramp_down.store(false, std::memory_order_release);
@@ -220,31 +209,32 @@ bool RtNeuralModel::loadModel() {
 }
 
 // non rt callback
-void RtNeuralModel::unloadModel() {
+void NeuralModelLoader::unloadModel() {
     std::unique_lock<std::mutex> lk(WMutex);
     ready.store(false, std::memory_order_release);
     SyncWait->wait_for(lk, std::chrono::milliseconds(160));
-    model.reset(nullptr);
+    if (model != nullptr) {
+        delete model;
+        model = nullptr;
+    }
    // fprintf(stderr, "delete model\n");
-    modelSampleRate = 0;
     needResample = 0;
-    modelFile = "None";
     //clearState();
+    modelFile = "None";
     ready.store(true, std::memory_order_release);
 }
 
-void RtNeuralModel::cleanUp() {
+// clean up
+void NeuralModelLoader::cleanUp() {
     ready.store(false, std::memory_order_release);
     if (model != nullptr) {
-        rawModel = model.release();
-        model.get_deleter()(rawModel);
-        rawModel = nullptr;
+        delete model;
         model = nullptr;
     }
-    modelSampleRate = 0;
     needResample = 0;
     modelFile = "None";
     ready.store(true, std::memory_order_release);
 }
 
 } // end namespace neuralrack
+

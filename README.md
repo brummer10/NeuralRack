@@ -7,14 +7,17 @@
 
 NeuralRack is a Neural Model and Impulse Response File loader for Linux/Windows.
 
-It supports [*.nam files](https://tonehunt.org/models?tags%5B0%5D=nam) with the
-[Neural Amp Modeler](https://github.com/sdatkinson/NeuralAmpModelerCore) engine, or 
-[*.json or .aidax files](https://tonehunt.org/models?tags%5B0%5D=aida-x) with the 
-[RTNeural](https://github.com/jatinchowdhury18/RTNeural) engine.
+It supports [*.nam files](https://www.tone3000.com/search?tags=103) and, or 
+[*.json or .aidax files](https://www.tone3000.com/search?tags=23562) by using the 
+[NeuralAudio](https://github.com/mikeoliphant/NeuralAudio) engine.
+
+For Impulse Response File Convolution it use [FFTConvolver](https://github.com/HiFi-LoFi/FFTConvolver)
+
+Resampling is done by [Libzita-resampler](https://kokkinizita.linuxaudio.org/linuxaudio/zita-resampler/resampler.html)
 
 NeuralRack emulate a simple guitar effect chain with a pedal, a EQ a Amplifier and a Stereo Cabinet.
 
-Optional, NeuralRack could run the complete process in buffered mode to reduce the dsp load. 
+Optional, NeuralRack could run one Model, or the complete process in buffered mode to reduce the dsp load. 
 The resulting latency will be reported to the host so that it could be compensated. 
 For information the resulting latency will be shown on the GUI.
 
