@@ -226,6 +226,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[3] = create_widget(&ui->main, ui->win, 5, 170, 600, 110);
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
+    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)0, 0.353, 0.141, 0.141,1.0);
     widget_get_png(ui->elem[3], LDVAR(texture_png));
     ui->elem[3]->func.expose_callback = draw_eq_window;
 

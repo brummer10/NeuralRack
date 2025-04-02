@@ -33,6 +33,11 @@ void NeuralModelLoader::clearState() {
 
 }
 
+void NeuralModelLoader::setMaxBufferSize(int maxSize) {
+    NeuralAudio::NeuralModel::SetDefaultMaxAudioBufferSize(maxSize);
+    if (model) model->SetMaxAudioBufferSize(maxSize);
+}
+
 void NeuralModelLoader::init(unsigned int sample_rate) {
     fSampleRate = sample_rate;
     clearState();
@@ -163,7 +168,7 @@ bool NeuralModelLoader::loadModel() {
             //fprintf(stderr, "load model %s\n", modelFile.c_str());
             if (model->GetRecommendedOutputDBAdjustment()) {
                 loudness = model->GetRecommendedOutputDBAdjustment();
-                nGain = pow(10.0, (-6.0 - loudness) / 20.0);
+                nGain = pow(10.0, (-6.0 + loudness) / 20.0);
             } else {
                 nGain = 1.0;
             }

@@ -63,6 +63,7 @@ public:
     std::string getModelFile() ;
     int getPhaseOffset() ;
     void clearState() ;
+    void setMaxBufferSize(int maxSize) ;
     void init(unsigned int sample_rate) ;
     void connect(uint32_t port,void* data) ;
     void normalize(int count, float *buf) ;

@@ -355,6 +355,8 @@ void Engine::do_work_mono() {
         bufferIsInit.store(true, std::memory_order_release);
         // set wait function time out for parallel processor thread
         pro.setTimeOut(std::max(100,static_cast<int>((bufsize/(s_rate*0.000001))*0.1)));
+        slotA.setMaxBufferSize(bufsize * 2);
+        slotB.setMaxBufferSize(bufsize * 2);
     }
     // set flag that work is done ready
     _execute.store(false, std::memory_order_release);

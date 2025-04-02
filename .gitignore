@@ -1,0 +1,8 @@
+*.a
+*.o
+*.so
+*.d
+*.lib
+*.exe
+bin/*
+NeuralRack/Neuralrack

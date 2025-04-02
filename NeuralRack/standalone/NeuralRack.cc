@@ -104,7 +104,7 @@ public:
     }
 
     inline void process(uint32_t n_samples, float* output, float* output1) {
-        engine.process(n_samples, output, output1);
+        if (processCounter > 2) engine.process(n_samples, output, output1);
     }
 
     // send value changes from GUI to the engine
