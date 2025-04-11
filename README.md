@@ -27,6 +27,7 @@ loaded models. Both models and the IR Files may have different expectations rega
 ## Packaging Status
 
 [![AUR package](https://repology.org/badge/version-for-repo/aur/neuralrack.svg)](https://repology.org/project/neuralrack/versions)
+[![FreeBSD port](https://repology.org/badge/version-for-repo/freebsd/neuralrack-lv2.svg)](https://repology.org/project/neuralrack-lv2/versions)
 
 To build NeuralRack only as standalone application run
 ```shell

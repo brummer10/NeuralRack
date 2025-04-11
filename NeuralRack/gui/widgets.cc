@@ -68,6 +68,20 @@ void boxShadowOutset(cairo_t* const cr, int x, int y, int width, int height, boo
     cairo_pattern_destroy (pat);
 }
 
+void round_area(cairo_t *cr, float x, float y, float x1, float y1, float width, float height, float r) {
+    float r1 = height* r;
+    float r2 = height* 0.08;
+    cairo_new_path (cr);
+    cairo_arc(cr, x+r2, y+r2, r2, M_PI, 3*M_PI/2);
+    cairo_arc(cr, x+width-r1, y+r1, r1, 3*M_PI/2, 0);
+    cairo_arc(cr, x+width-r1, y1-1-r1, r1, 0, M_PI/2);
+    cairo_arc_negative(cr, x1+r1, y1+r1, r1, 3*M_PI/2, M_PI);
+    //cairo_arc(cr, x1-r1, y+height-r1, r1, 0, M_PI/2);
+    cairo_arc_negative(cr, x1+r1, y+height-r1, r1, M_PI, M_PI/2);
+    cairo_arc(cr, x+r2, y+height-r2, r2, M_PI/2, M_PI);
+    cairo_close_path(cr);
+}
+
 void round_rectangle(cairo_t *cr,float x, float y, float width, float height, float round) {
     float r = height* round;
     cairo_new_path (cr);
@@ -238,14 +252,21 @@ void draw_ir_elem(void *w_, void* user_data) {
     //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
     use_bg_color_scheme(w, NORMAL_);
     cairo_paint (w->crb);
+
     cairo_pattern_t *pat = cairo_pattern_create_for_surface(w->image);
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_paint (w->crb);
-    //cairo_set_source_rgba(w->crb, 0.353, 0.141, 0.141,1.0);
+
+    round_area(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
+         92 * w->scale.rcscale_x * w->app->hdpi, w->height -54 * w->scale.rcscale_y * w->app->hdpi,
+        w->width-105 * w->scale.rcscale_x * w->app->hdpi, w->height-21 * w->scale.rcscale_y * w->app->hdpi, 0.25);
     use_fg_color_scheme(w, NORMAL_);
+    cairo_stroke (w->crb);
+
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
         w->width-20 * w->scale.rcscale_x * w->app->hdpi, w->height-20 * w->scale.rcscale_y * w->app->hdpi, 0.08);
+    use_fg_color_scheme(w, NORMAL_);
     cairo_stroke (w->crb);
 
     cairo_rectangle(w->crb,0, 0, w->width * w->app->hdpi, w->height * w->app->hdpi);
@@ -256,10 +277,10 @@ void draw_ir_elem(void *w_, void* user_data) {
     widget_set_scale(w);
 
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
-    round_rectangle(w->crb, 100 * w->app->hdpi, 24 * w->app->hdpi,
+    round_rectangle(w->crb, 100 * w->app->hdpi, 20 * w->app->hdpi,
                                             400 * w->app->hdpi, 30 * w->app->hdpi, 0.5);
     cairo_fill_preserve (w->crb);
-    boxShadowInset(w->crb,100 * w->app->hdpi,24 * w->app->hdpi,
+    boxShadowInset(w->crb,100 * w->app->hdpi,20 * w->app->hdpi,
                                             400 * w->app->hdpi, 30 * w->app->hdpi, true);
     cairo_fill (w->crb);
 
@@ -294,7 +315,7 @@ void draw_ir_elem(void *w_, void* user_data) {
 
         cairo_text_extents(w->crb, label, &extents_f);
         double twf = extents_f.width/2.0;
-        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.50)-twf), 44 * w->app->hdpi );
+        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.50)-twf), 40 * w->app->hdpi );
         cairo_show_text(w->crb, label);
     }
     if (strlen(ps->ir1.filename)) {
@@ -1050,7 +1071,7 @@ static void my_fbutton_callback(void *w_, void* user_data) {
         if (!filebutton->w) {
             filebutton->w = open_file_dialog(w,filebutton->path,filebutton->filter);
             filebutton->w->flags |= HIDE_ON_DELETE;
-            if (strcmp(filebutton->filter, ".wav") == 0) {
+            if (strcmp(filebutton->filter, ".wav|.WAV") == 0) {
                 widget_set_title(filebutton->w, _("File Selector - Select Impulse Response"));
             } else {
                 widget_set_title(filebutton->w, _("File Selector - Select Neural Model"));
@@ -1156,7 +1177,7 @@ Widget_t* add_lv2_file_button(Widget_t *w, Widget_t *p, int index, const char * 
 
 Widget_t* add_lv2_irfile_button(Widget_t *w, Widget_t *p, int index, const char * label,
                                 X11_UI* ui, int x, int y, int width, int height) {
-    w = add_my_file_button(p, x, y, width, height, "IR File", "", ".wav");
+    w = add_my_file_button(p, x, y, width, height, "IR File", "", ".wav|.WAV");
     widget_get_png(w, LDVAR(wavdir_png));
     w->data = index;
     return w;

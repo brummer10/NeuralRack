@@ -251,7 +251,8 @@ public:
                 engine.model_file1 = m->filename;
                 engine._ab.fetch_add(2, std::memory_order_relaxed);
             }
-        } else if (ends_with(m->filename, "wav")) {
+        } else if (ends_with(m->filename, "wav")||
+                   ends_with(m->filename, "WAV") ) {
             if ( m == &ps->ir) {
                 engine.ir_file = m->filename;
                 engine._cd.fetch_add(1, std::memory_order_relaxed);

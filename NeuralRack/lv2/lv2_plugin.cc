@@ -90,7 +90,8 @@ void sendFileName(X11_UI *ui, ModelPicker* m, int old) {
                ends_with(m->filename, "aidax")) {
         if ( m == &ps->ma) urid = ui->itf.uris.neural_model;
         else  urid = ui->itf.uris.neural_model1;
-    } else if (ends_with(m->filename, "wav")) {
+    } else if (ends_with(m->filename, "wav") ||
+               ends_with(m->filename, "WAV") ) {
         if ( m == &ps->ir) urid = ui->itf.uris.conv_ir_file;
         else urid = ui->itf.uris.conv_ir_file1;
     } else return;

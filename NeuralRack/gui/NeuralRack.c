@@ -86,7 +86,8 @@ static void file_load_response(void *w_, void* user_data) {
                 ends_with(m->filename, "json") ||
                 ends_with(m->filename, "aidax")) {
             old = 1;
-        } else if (ends_with(m->filename, "wav")) {
+        } else if (ends_with(m->filename, "wav") ||
+                   ends_with(m->filename, "WAV") ) {
             old = 2;
         }
         free(m->filename);
@@ -169,11 +170,11 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ps->mb.filepicker->use_filter = 1;
     ps->ir.filepicker = (FilePicker*)malloc(sizeof(FilePicker));
     fp_init(ps->ir.filepicker, "/");
-    asprintf(&ps->ir.filepicker->filter ,"%s", ".wav");
+    asprintf(&ps->ir.filepicker->filter ,"%s", ".wav|.WAV");
     ps->ir.filepicker->use_filter = 1;
     ps->ir1.filepicker = (FilePicker*)malloc(sizeof(FilePicker));
     fp_init(ps->ir1.filepicker, "/");
-    asprintf(&ps->ir1.filepicker->filter ,"%s", ".wav");
+    asprintf(&ps->ir1.filepicker->filter ,"%s", ".wav|.WAV");
     ps->ir1.filepicker->use_filter = 1;
 
     ui->widget[15] = add_lv2_slider (ui->widget[15], ui->win, 20, "Buffer", ui, 50,  12, 40, 40);
@@ -302,21 +303,21 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_adjustment(ui->widget[3]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)0, 0.322, 0.322, 0.322,1.0);
     set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
-    set_widget_color(ui->widget[3], (Color_state)1, (Color_mod)0, 0.422, 0.422, 0.422,1.0);
+    set_widget_color(ui->widget[3], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622,1.0);
 
-    ps->ir.fbutton = add_lv2_button(ps->ir.fbutton, ui->elem[2], "", ui, 445, 24, 22, 30);
+    ps->ir.fbutton = add_lv2_button(ps->ir.fbutton, ui->elem[2], "", ui, 445, 20, 22, 30);
     ps->ir.fbutton->parent_struct = (void*)&ps->ir;
     combobox_set_pop_position(ps->ir.fbutton, 0);
     combobox_set_entry_length(ps->ir.fbutton, 60);
     combobox_add_entry(ps->ir.fbutton, "None");
     ps->ir.fbutton->func.value_changed_callback = file_menu_callback;
 
-    ps->ir.filebutton = add_lv2_irfile_button (ps->ir.filebutton, ui->elem[2], -3, "IR File", ui, 115, 28, 25, 25);
+    ps->ir.filebutton = add_lv2_irfile_button (ps->ir.filebutton, ui->elem[2], -3, "IR File", ui, 115, 24, 25, 25);
     ps->ir.filebutton->parent_struct = (void*)&ps->ir;
     ps->ir.filebutton->func.user_callback = file_load_response;
 
-    ui->widget[5] = add_lv2_toggle_button (ui->widget[5], ui->elem[2], 9, "", ui, 140, 28, 25, 25);
-    ui->widget[13] = add_lv2_erase_button (ui->widget[13], ui->elem[2], 17, "", ui, 470, 28, 25, 25);
+    ui->widget[5] = add_lv2_toggle_button (ui->widget[5], ui->elem[2], 9, "", ui, 140, 24, 25, 25);
+    ui->widget[13] = add_lv2_erase_button (ui->widget[13], ui->elem[2], 17, "", ui, 470, 24, 25, 25);
 
 //IR 1
     ui->widget[4] = add_lv2_knob (ui->widget[4], ui->elem[2], 8, "Gain (R)", ui, 510, 15, 70, 80);
@@ -324,7 +325,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_adjustment(ui->widget[4]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     set_widget_color(ui->widget[4], (Color_state)0, (Color_mod)0, 0.322, 0.322, 0.322,1.0);
     set_widget_color(ui->widget[4], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
-    set_widget_color(ui->widget[4], (Color_state)1, (Color_mod)0, 0.422, 0.422, 0.422,1.0);
+    set_widget_color(ui->widget[4], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622,1.0);
 
     ps->ir1.fbutton = add_lv2_button(ps->ir1.fbutton, ui->elem[2], "", ui, 445, 64, 22, 30);
     ps->ir1.fbutton->parent_struct = (void*)&ps->ir1;
