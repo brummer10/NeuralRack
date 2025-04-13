@@ -36,6 +36,7 @@
 
 #include "dcblocker.cc"
 #include "eq.cc"
+#include "NoiseGate.cc"
 
 #include "NeuralModelLoader.h"
 #include "fftconvolver.h"
@@ -91,11 +92,12 @@ class Engine
 {
 public:
     ParallelThread               xrworker;
-    NeuralModelLoader              slotA;
-    NeuralModelLoader              slotB;
+    NeuralModelLoader            slotA;
+    NeuralModelLoader            slotB;
     ConvolverSelector            conv;
     ConvolverSelector            conv1;
     eq::Dsp*                     peq;
+    noisegate::Dsp*              ngate;
 
     float                        inputGain;
     float                        inputGain1;
@@ -116,6 +118,7 @@ public:
     uint32_t                     bufsize;
     uint32_t                     buffersize;
     uint32_t                     eqOnOff;
+    uint32_t                     ngOnOff;
     int                          phaseOffset;
 
     std::string                  model_file;
@@ -178,6 +181,7 @@ inline Engine::Engine() :
     par(),
     dcb(dcblocker::plugin()),
     peq(eq::plugin()),
+    ngate(noisegate::plugin()),
     slotA(&Sync),
     slotB(&Sync),
     conv(),
@@ -202,6 +206,7 @@ inline Engine::~Engine(){
 
     dcb->del_instance(dcb);
     peq->del_instance(peq);
+    ngate->del_instance(ngate);
     slotA.cleanUp();
     slotB.cleanUp();
     conv.stop_process();
@@ -214,6 +219,7 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
     s_rate = rate;
     dcb->init(rate);
     peq->init(rate);
+    ngate->init(rate);
     slotA.init(rate);
     slotB.init(rate);
 
@@ -224,6 +230,7 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
     phaseOffset = 0;
     bypass = 0;
     eqOnOff = 0;
+    ngOnOff = 0;
     normSlotA = 0;
     normSlotB = 0;
     inputGain = 0.0;
@@ -425,6 +432,10 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     double fSlow1 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(IRoutputGain));
     double fSlow5 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(IRoutputGain1));
 
+    // run noisegate
+    if (ngOnOff)
+        ngate->compute(n_samples, output);
+
     // process input volume slot A
     if (_neuralA.load(std::memory_order_acquire)) {
         for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
@@ -530,12 +541,20 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         fRec1[1] = fRec1[0];
     }
 
+    // run noisegate
+    if (ngOnOff)
+        ngate->computeLeft(n_samples, output);
+
     // IRoutputGain1
     for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
         fRec5[0] = fSlow5 + 0.999 * fRec5[1];
         output1[i0] = bufb[i0] * fRec5[0];
         fRec5[1] = fRec5[0];
     }
+
+    // run noisegate
+    if (ngOnOff)
+        ngate->computeRight(n_samples, output1);
     
     // notify neural modeller that process cycle is done
     Sync.notify_all();

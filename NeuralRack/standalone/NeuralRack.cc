@@ -56,7 +56,7 @@ public:
     void startGui() {
         main_init(&ui->main);
         set_custom_theme(ui);
-        ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, 610, 510);
+        ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, 610, 580);
         widget_set_title(ui->win, "NeuralRack");
         widget_set_icon_from_png(ui->win,LDVAR(NeuralRack_png));
         ui->win->parent_struct = ui;
@@ -89,6 +89,8 @@ public:
         engine.peq->fVslider3 =  0.0;
         engine.peq->fVslider4 =  0.0;
         engine.peq->fVslider5 =  -20.0;
+        engine.ngate->threshold = -0.017;
+        engine.ngOnOff = 0;
     }
 
     void initEngine(uint32_t rate, int32_t prio, int32_t policy) {
@@ -212,8 +214,13 @@ public:
                 engine.peq->fVslider5 =  value;
             break;
             case 30:
-                engine.eqOnOff = static_cast<int32_t>(value);
-
+                engine.eqOnOff = static_cast<uint32_t>(value);
+            break;
+            case 31:
+                engine.ngate->threshold =  value;
+            break;
+            case 32:
+                engine.ngOnOff = static_cast<uint32_t>(value);
             break;
             default:
             break;

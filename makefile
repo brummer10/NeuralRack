@@ -54,6 +54,7 @@ clean:
 	@rm -f ./libxputty/xputty/resources/exit_.png
 	@rm -f ./libxputty/xputty/resources/knob1.png
 	@rm -f ./libxputty/xputty/resources/knob2.png
+	@rm -f ./libxputty/xputty/resources/knob3.png
 	@rm -f ./libxputty/xputty/resources/NeuralRack.png
 
 features:

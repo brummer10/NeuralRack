@@ -423,9 +423,9 @@ ifneq ("$(wildcard ../bin/$(EXEC_NAME)$(EXE_EXT))","")
 
   ifeq ($(user),root)
 	$(QUIET)mkdir -p $(DESTDIR)$(DESKAPPS_DIR)
-	$(QUIET)cp $(STANDALONE_DIR)$(EXEC_NAME).desktop $(DESTDIR)$(DESKAPPS_DIR)$(NAME).desktop
+	$(QUIET)cp $(STANDALONE_DIR)$(NAME).desktop $(DESTDIR)$(DESKAPPS_DIR)$(NAME).desktop
 	$(QUIET)mkdir -p $(DESTDIR)$(PIXMAPS_DIR)
-	$(QUIET)cp $(STANDALONE_DIR)$(EXEC_NAME).svg $(DESTDIR)$(PIXMAPS_DIR)$(EXEC_NAME).svg 
+	$(QUIET)cp $(STANDALONE_DIR)$(NAME).svg $(DESTDIR)$(PIXMAPS_DIR)$(NAME).svg 
 	$(QUIET)update-desktop-database || true
   endif
 	@$(B_ECHO) ". ., done$(reset)"

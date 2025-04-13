@@ -20,9 +20,9 @@
 extern "C" {
 #endif
 
-#define CONTROLS 25
+#define CONTROLS 27
 
-#define GUI_ELEMENTS 4
+#define GUI_ELEMENTS 5
 
 #define TAB_ELEMENTS 0
 

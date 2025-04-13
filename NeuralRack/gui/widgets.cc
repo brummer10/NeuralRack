@@ -111,13 +111,15 @@ char* utf8crop(char* dst, const char* src, size_t sizeDest ) {
 // draw the EQ window
 void draw_eq_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
-    cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
+    //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
+    use_bg_color_scheme(w, NORMAL_);
     cairo_paint (w->crb);
     cairo_pattern_t *pat = cairo_pattern_create_for_surface(w->image);
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_paint (w->crb);
-    cairo_set_source_rgba(w->crb, 0.353, 0.141, 0.141,1.0);
+    //cairo_set_source_rgba(w->crb, 0.353, 0.141, 0.141,1.0);
+    use_fg_color_scheme(w, NORMAL_);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
         w->width-20 * w->scale.rcscale_x * w->app->hdpi, w->height-20 * w->scale.rcscale_y * w->app->hdpi, 0.08);
     cairo_stroke (w->crb);
@@ -130,12 +132,12 @@ void draw_eq_window(void *w_, void* user_data) {
 
     cairo_text_extents_t extents;
     use_text_color_scheme(w, NORMAL_);
-    cairo_set_font_size (w->crb, w->app->big_font+8);
+    cairo_set_font_size (w->crb, w->app->big_font+5);
     cairo_text_extents(w->crb,w->label , &extents);
     double tw = extents.width/2.0;
 
     widget_set_scale(w);
-    cairo_set_font_size (w->crb, w->app->big_font+8);
+    cairo_set_font_size (w->crb, w->app->big_font+5);
 
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw-1, (42 * w->app->hdpi)-1);
     cairo_text_path(w->crb, w->label);

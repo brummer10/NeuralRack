@@ -1,5 +1,5 @@
 
-@prefix doap:  <http://usefulinc.com/ns/doap#> .
+@prefix doap:   <http://usefulinc.com/ns/doap#> .
 @prefix foaf:   <http://xmlns.com/foaf/0.1/> .
 @prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -10,16 +10,52 @@
 @prefix units:  <http://lv2plug.in/ns/extensions/units#> .
 @prefix atom:   <http://lv2plug.in/ns/ext/atom#> .
 @prefix urid:   <http://lv2plug.in/ns/ext/urid#> .
+@prefix pg:     <http://lv2plug.in/ns/ext/port-groups#> .
 @prefix pprop:  <http://lv2plug.in/ns/ext/port-props#> .
 @prefix midi:   <http://lv2plug.in/ns/ext/midi#> .
 @prefix patch:  <http://lv2plug.in/ns/ext/patch#> .
-@prefix work:  <http://lv2plug.in/ns/ext/worker#> .
-@prefix bufsz: <http://lv2plug.in/ns/ext/buf-size#> .
-@prefix state:   <http://lv2plug.in/ns/ext/state#> .
-@prefix mod: <http://moddevices.com/ns/mod#> .
-@prefix nrack: <urn:brummer:neuralrack#> .
-@prefix spdx:  <http://spdx.org/rdf/terms#> .
+@prefix work:   <http://lv2plug.in/ns/ext/worker#> .
+@prefix bufsz:  <http://lv2plug.in/ns/ext/buf-size#> .
+@prefix state:  <http://lv2plug.in/ns/ext/state#> .
+@prefix mod:    <http://moddevices.com/ns/mod#> .
+@prefix nrack:  <urn:brummer:neuralrack#> .
+@prefix spdx:   <http://spdx.org/rdf/terms#> .
 
+
+nrack:G0_Default
+    a pg:InputGroup ;
+    lv2:symbol "Default" ;
+    rdfs:label "Default" .
+
+nrack:G1_NoiseGate
+    a pg:InputGroup ;
+    lv2:symbol "NoiseGate" ;
+    rdfs:label "NoiseGate" .
+
+nrack:G2_Pedal
+    a pg:InputGroup ;
+    lv2:symbol "Pedal" ;
+    rdfs:label "Pedal Profile" .
+
+nrack:G3_EQ
+    a pg:InputGroup ;
+    lv2:symbol "EQ" ;
+    rdfs:label "6 Band EQ" .
+
+nrack:G4_Amp
+    a pg:InputGroup ;
+    lv2:symbol "Amp" ;
+    rdfs:label "Amp Profile" .
+
+nrack:G5_IR_Left
+    a pg:InputGroup ;
+    lv2:symbol "IR" ;
+    rdfs:label "IR Left" .
+
+nrack:G6_IR_Right
+    a pg:InputGroup ;
+    lv2:symbol "IR1" ;
+    rdfs:label "IR Right" .
 
 <nrack:me>
    a foaf:Person ;
@@ -31,24 +67,28 @@ nrack:Neural_Model
     a lv2:Parameter ;
     mod:fileTypes "nammodel,aidadspmodel,nam,aidiax,json" ;
     rdfs:label "Neural Model A" ;
+    pg:group nrack:G2_Pedal ;
     rdfs:range atom:Path .
 
 nrack:Neural_Model1
     a lv2:Parameter ;
     mod:fileTypes "nammodel,aidadspmodel,nam,aidiax,json" ;
     rdfs:label "Neural Model B" ;
+    pg:group nrack:G4_Amp ;
     rdfs:range atom:Path .
 
 nrack:irfile
     a lv2:Parameter ;
     mod:fileTypes "cabsim,ir,wav,audio" ;
     rdfs:label "IR File" ;
+    pg:group nrack:G5_IR_Left ;
     rdfs:range atom:Path .
 
 nrack:irfile1
     a lv2:Parameter ;
     mod:fileTypes "cabsim,ir,wav,audio" ;
     rdfs:label "IR File 1" ;
+    pg:group nrack:G6_IR_Right ;
     rdfs:range atom:Path .
 
 <urn:brummer:neuralrack>
@@ -107,6 +147,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 2 ;
       lv2:symbol "Knob0" ;
       lv2:name "input" ;
+      pg:group nrack:G2_Pedal ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -116,6 +157,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 3 ;
       lv2:symbol "Knob1" ;
       lv2:name "output" ;
+      pg:group nrack:G2_Pedal ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -125,6 +167,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 4 ;
       lv2:symbol "Knob2" ;
       lv2:name "output1" ;
+      pg:group nrack:G4_Amp ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -154,6 +197,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 7 ;
       lv2:symbol "Knob3" ;
       lv2:name "IR output" ;
+      pg:group nrack:G5_IR_Left ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -163,6 +207,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 8 ;
       lv2:symbol "Knob4" ;
       lv2:name "IR output1" ;
+      pg:group nrack:G6_IR_Right ;
       lv2:default 0.0 ;
       lv2:minimum -20.0;
       lv2:maximum 20.0 ;
@@ -173,6 +218,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "NormalizeA" ;
       lv2:name "Normalize A" ;
+      pg:group nrack:G5_IR_Left ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -183,6 +229,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "NormalizeB" ;
       lv2:name "Normalize B" ;
+      pg:group nrack:G6_IR_Right ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -192,6 +239,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 11 ;
       lv2:symbol "Knob5" ;
       lv2:name "input1" ;
+      pg:group nrack:G4_Amp ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -202,6 +250,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "NormalizeSlotA" ;
       lv2:name "Normalize Slot A" ;
+      pg:group nrack:G2_Pedal ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -212,6 +261,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "NormalizeSlotB" ;
       lv2:name "Normalize Slot B" ;
+      pg:group nrack:G4_Amp ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -223,6 +273,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "ENABLE" ;
       lv2:name "enable" ;
+      pg:group nrack:G0_Default ;
       lv2:default 1.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -233,6 +284,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty pprop:trigger ;
       lv2:symbol "eraseSlotA" ;
       lv2:name "erase Slot A" ;
+      pg:group nrack:G2_Pedal ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -243,6 +295,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty pprop:trigger ;
       lv2:symbol "eraseSlotB" ;
       lv2:name "erase Slot B" ;
+      pg:group nrack:G4_Amp ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -253,6 +306,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty pprop:trigger ;
       lv2:symbol "eraseIr" ;
       lv2:name "erase Ir" ;
+      pg:group nrack:G5_IR_Left ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -263,6 +317,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty pprop:trigger ;
       lv2:symbol "eraseIr1" ;
       lv2:name "erase Ir1" ;
+      pg:group nrack:G6_IR_Right ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;
@@ -284,6 +339,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:integer ;
       lv2:symbol "buffered" ;
       lv2:name "Buffered" ;
+      pg:group nrack:G0_Default ;
       lv2:default 0 ;
       lv2:minimum 0 ;
       lv2:maximum 2 ;
@@ -316,6 +372,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 24 ;
       lv2:symbol "_30Hz" ;
       lv2:name "30Hz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default -20.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -325,6 +382,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 25 ;
       lv2:symbol "_125Hz" ;
       lv2:name "125Hz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -334,6 +392,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 26 ;
       lv2:symbol "_500Hz" ;
       lv2:name "500Hz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -343,6 +402,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 27 ;
       lv2:symbol "_2kHz" ;
       lv2:name "2kHz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -352,6 +412,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 28 ;
       lv2:symbol "_8kHz" ;
       lv2:name "8kHz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -361,6 +422,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:index 29 ;
       lv2:symbol "_16kHz" ;
       lv2:name "16kHz" ;
+      pg:group nrack:G3_EQ ;
       lv2:default -20.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -371,6 +433,28 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:portProperty lv2:toggled ;
       lv2:symbol "EQ" ;
       lv2:name "EQ on/off" ;
+      pg:group nrack:G3_EQ ;
+      lv2:default 0.0 ;
+      lv2:minimum 0.0 ;
+      lv2:maximum 1.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 31 ;
+      lv2:symbol "Threshold" ;
+      lv2:name "Threshold" ;
+      pg:group nrack:G1_NoiseGate ;
+      lv2:default 0.017 ;
+      lv2:minimum 0.01 ;
+      lv2:maximum 0.31 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 32 ;
+      lv2:portProperty lv2:toggled ;
+      lv2:symbol "NoiseGate" ;
+      lv2:name "NG on/off" ;
+      pg:group nrack:G1_NoiseGate ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;

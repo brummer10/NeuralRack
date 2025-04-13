@@ -133,7 +133,7 @@ static void file_menu_callback(void *w_, void* user_data) {
 
 void plugin_set_window_size(int *w,int *h,const char * plugin_uri) {
     (*w) = 610; //set initial width of main window
-    (*h) = 510; //set initial height of main window
+    (*h) = 580; //set initial height of main window
 }
 
 const char* plugin_set_name() {
@@ -185,15 +185,36 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
 
     ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "", ui, 505,  17, 50, 50);
 
+// noisegate
+    ui->elem[4] = create_widget(&ui->main, ui->win, 5, 60, 600, 70);
+    ui->elem[4]->parent_struct = ui;
+    ui->elem[4]->label = "Noise Gate";
+    ui->elem[4]->data = 1;
+    widget_get_png(ui->elem[4], LDVAR(texture_png));
+    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)1, 0.129, 0.113, 0.188,1.0);
+    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)0, 0.235, 0.215, 0.282,1.0);
+    ui->elem[4]->func.expose_callback = draw_eq_window;
+
+    ui->widget[26] = add_eq_button (ui->widget[26], ui->elem[4], 32, "", ui, 20,  20, 30, 30);
+    widget_get_png(ui->widget[26], LDVAR(exit__png));
+
+    ui->widget[25] = add_lv2_knob (ui->widget[25], ui->elem[4], 31, "", ui, 510, 5, 70, 70); //Threshold
+    widget_get_png(ui->widget[25], LDVAR(knob3_png));
+    set_adjustment(ui->widget[25]->adj, 0.017, 0.017, 0.01, 0.31, 0.001, CL_CONTINUOS);
+    set_widget_color(ui->widget[25], (Color_state)0, (Color_mod)0, 0.235, 0.215, 0.282,1.0);
+    set_widget_color(ui->widget[25], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    set_widget_color(ui->widget[25], (Color_state)1, (Color_mod)0, 0.335, 0.315, 0.382,1.0);
+
 // slot A
-    ui->elem[0] = create_widget(&ui->main, ui->win, 5, 60, 600, 110);
+    ui->elem[0] = create_widget(&ui->main, ui->win, 5, 130, 600, 110);
     ui->elem[0]->parent_struct = ui;
-    ui->elem[0]->label = "Pedal Profiler";
+    ui->elem[0]->label = "Pedal Profile";
     ui->elem[0]->data = 1;
     widget_get_png(ui->elem[0], LDVAR(texture_png));
     set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.023, 0.204, 0.259,1.0);
     set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)0, 0.153, 0.341, 0.341,1.0);
     ui->elem[0]->func.expose_callback = draw_elem;
+
     ui->widget[0] = add_lv2_knob (ui->widget[0], ui->elem[0], 2, "Input", ui, 430, 15, 70, 80);
     widget_get_png(ui->widget[0], LDVAR(knob1_png));
     set_adjustment(ui->widget[0]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
@@ -224,9 +245,10 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[11] = add_lv2_erase_button (ui->widget[11], ui->elem[0], 15, "", ui, 390, 48, 25, 25);
 
 // EQ
-    ui->elem[3] = create_widget(&ui->main, ui->win, 5, 170, 600, 110);
+    ui->elem[3] = create_widget(&ui->main, ui->win, 5, 240, 600, 110);
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
+    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.223, 0.004, 0.059,1.0);
     set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)0, 0.353, 0.141, 0.141,1.0);
     widget_get_png(ui->elem[3], LDVAR(texture_png));
     ui->elem[3]->func.expose_callback = draw_eq_window;
@@ -253,9 +275,9 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_adjustment(ui->widget[23]->adj, -20.0, -20.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
 
 // sloat B
-    ui->elem[1] = create_widget(&ui->main, ui->win, 5, 280, 600, 110);
+    ui->elem[1] = create_widget(&ui->main, ui->win, 5, 350, 600, 110);
     ui->elem[1]->parent_struct = ui;
-    ui->elem[1]->label = "Amp Profiler";
+    ui->elem[1]->label = "Amp Profile";
     ui->elem[1]->data = 2;
     widget_get_png(ui->elem[1], LDVAR(texture_png));
     set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.276, 0.276, 0.176,1.0);
@@ -290,7 +312,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[12] = add_lv2_erase_button (ui->widget[12], ui->elem[1], 16, "", ui, 390, 48, 25, 25);
 
 // IR
-    ui->elem[2] = create_widget(&ui->main, ui->win, 5, 390, 600, 110);
+    ui->elem[2] = create_widget(&ui->main, ui->win, 5, 460, 600, 110);
     ui->elem[2]->parent_struct = ui;
     ui->elem[2]->label = "Amp Profiler";
     widget_get_png(ui->elem[2], LDVAR(texture_png));

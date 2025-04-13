@@ -70,7 +70,9 @@ private:
     float*                       _fVslider3;
     float*                       _fVslider4;
     float*                       _fVslider5;
+    float*                       _threshold;
     float*                       _eqOnOff;
+    float*                       _ngOnOff;
     uint32_t                     s_rate;
     double                       s_time;
     int                          processCounter;
@@ -163,7 +165,9 @@ Xneuralrack::Xneuralrack() :
     _fVslider3(0),
     _fVslider4(0),
     _fVslider5(0),
-    _eqOnOff(0) {
+    _threshold(0),
+    _eqOnOff(0),
+    _ngOnOff(0) {
         map = nullptr;
         schedule = nullptr;
         control = nullptr;
@@ -289,6 +293,12 @@ void Xneuralrack::connect_(uint32_t port,void* data)
         case 30:
             _eqOnOff = static_cast<float*>(data);
             break;
+        case 31: 
+            _threshold = static_cast<float*>(data); 
+            break;
+        case 32:
+            _ngOnOff = static_cast<float*>(data);
+            break;
         default:
             break;
     }
@@ -402,6 +412,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
     engine.normSlotB = static_cast<int32_t>(*_normSlotB);
     engine.bypass = static_cast<uint32_t>(*_bypass);
     engine.eqOnOff = static_cast<uint32_t>(*_eqOnOff);
+    engine.ngOnOff = static_cast<uint32_t>(*_ngOnOff);
     engine.inputGain = *_inputGain;
     engine.inputGain1 = *_inputGain1;
     engine.outputGain = *_outputGain;
@@ -415,6 +426,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
     engine.peq->fVslider3 = *_fVslider3;
     engine.peq->fVslider4 = *_fVslider4;
     engine.peq->fVslider5 = *_fVslider5;
+    engine.ngate->threshold = *_threshold;
 
     // check if a model or IR file is to be removed
     if ((*_eraseSlotA)) {
