@@ -39,7 +39,7 @@ nrack:G2_Pedal
 
 nrack:G3_EQ
     a pg:InputGroup ;
-    lv2:symbol "EQ" ;
+    lv2:symbol "Equaliser" ;
     rdfs:label "6 Band EQ" .
 
 nrack:G4_Amp
@@ -452,7 +452,7 @@ The resulting latency will be reported to the host so that it could be compensat
           lv2:ControlPort ;
       lv2:index 32 ;
       lv2:portProperty lv2:toggled ;
-      lv2:symbol "NoiseGate" ;
+      lv2:symbol "Noisegate" ;
       lv2:name "NG on/off" ;
       pg:group nrack:G1_NoiseGate ;
       lv2:default 0.0 ;
