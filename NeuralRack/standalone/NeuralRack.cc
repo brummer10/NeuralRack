@@ -56,7 +56,10 @@ public:
     void startGui() {
         main_init(&ui->main);
         set_custom_theme(ui);
-        ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, 610, 580);
+        int w = 1;
+        int h = 1;
+        plugin_set_window_size(&w,&h,"standalone");
+        ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, w, h);
         widget_set_title(ui->win, "NeuralRack");
         widget_set_icon_from_png(ui->win,LDVAR(NeuralRack_png));
         ui->win->parent_struct = ui;

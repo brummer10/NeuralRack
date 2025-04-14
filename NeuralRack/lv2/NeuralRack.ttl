@@ -10,6 +10,7 @@
 @prefix units:  <http://lv2plug.in/ns/extensions/units#> .
 @prefix atom:   <http://lv2plug.in/ns/ext/atom#> .
 @prefix urid:   <http://lv2plug.in/ns/ext/urid#> .
+@prefix param:  <http://lv2plug.in/ns/ext/parameters#> .
 @prefix pg:     <http://lv2plug.in/ns/ext/port-groups#> .
 @prefix pprop:  <http://lv2plug.in/ns/ext/port-props#> .
 @prefix midi:   <http://lv2plug.in/ns/ext/midi#> .
@@ -23,37 +24,37 @@
 
 
 nrack:G0_Default
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "Default" ;
     rdfs:label "Default" .
 
 nrack:G1_NoiseGate
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "NoiseGate" ;
     rdfs:label "NoiseGate" .
 
 nrack:G2_Pedal
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "Pedal" ;
     rdfs:label "Pedal Profile" .
 
 nrack:G3_EQ
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "Equaliser" ;
     rdfs:label "6 Band EQ" .
 
 nrack:G4_Amp
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "Amp" ;
     rdfs:label "Amp Profile" .
 
 nrack:G5_IR_Left
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "IR" ;
     rdfs:label "IR Left" .
 
 nrack:G6_IR_Right
-    a pg:InputGroup ;
+    a param:ControlGroup ;
     lv2:symbol "IR1" ;
     rdfs:label "IR Right" .
 
