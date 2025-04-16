@@ -57,9 +57,9 @@ void boxShadowOutset(cairo_t* const cr, int x, int y, int width, int height, boo
     cairo_pattern_add_color_stop_rgba
         (pat, 0,0.33,0.33,0.33, 1.0);
     cairo_pattern_add_color_stop_rgba
-        (pat, 0.03,0.33 * 0.6,0.33 * 0.6,0.33 * 0.6, 0.0);
+        (pat, 0.07,0.33 * 0.6,0.33 * 0.6,0.33 * 0.6, 0.0);
     cairo_pattern_add_color_stop_rgba
-        (pat, 0.97, 0.05 * 2.0, 0.05 * 2.0, 0.05 * 2.0, 0.0);
+        (pat, 0.93, 0.05 * 2.0, 0.05 * 2.0, 0.05 * 2.0, 0.0);
     cairo_pattern_add_color_stop_rgba
         (pat, 1, 0.05, 0.05, 0.05, 1.0);
     cairo_set_source(cr, pat);
@@ -89,6 +89,16 @@ void round_rectangle(cairo_t *cr,float x, float y, float width, float height, fl
     cairo_arc(cr, x+width-1-r, y+r, r, 3*M_PI/2, 0);
     cairo_arc(cr, x+width-1-r, y+height-1-r, r, 0, M_PI/2);
     cairo_arc(cr, x+r, y+height-1-r, r, M_PI/2, M_PI);
+    cairo_close_path(cr);
+}
+
+void inv_round_rectangle(cairo_t *cr,float x, float y, float width, float height, float round) {
+    float r = 90.0* round;
+    cairo_new_path (cr);
+    cairo_arc_negative(cr, x+r, y+r, r, M_PI, 3*M_PI/2);
+    cairo_arc_negative(cr, x+width-1-r, y+r, r, 3*M_PI/2, 0);
+    cairo_arc_negative(cr, x+width-1-r, y+height-1-r, r, 0, M_PI/2);
+    cairo_arc_negative(cr, x+r, y+height-1-r, r, M_PI/2, M_PI);
     cairo_close_path(cr);
 }
 
@@ -360,6 +370,9 @@ static void draw_window(void *w_, void* user_data) {
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_paint (w->crb);
+    boxShadowOutset(w->crb,0,0,
+        w->width * w->app->hdpi,w->height * w->app->hdpi, false);
+    //cairo_stroke (w->crb);
 
 #ifndef HIDE_NAME
     widget_set_scale(w);
