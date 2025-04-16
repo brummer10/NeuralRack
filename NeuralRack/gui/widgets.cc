@@ -118,7 +118,7 @@ char* utf8crop(char* dst, const char* src, size_t sizeDest ) {
     return dst;
 }
 
-// draw the EQ window
+// draw the EQ and the Noise Gate window
 void draw_eq_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
     //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
@@ -152,15 +152,18 @@ void draw_eq_window(void *w_, void* user_data) {
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw-1, (42 * w->app->hdpi)-1);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
+    // upper contour of the rack label
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     cairo_stroke (w->crb);
 
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw+1, (42 * w->app->hdpi)+1);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
+    // base colour of the rack label
     cairo_set_source_rgba(w->crb, 0.33, 0.33, 0.33, 1);
     cairo_stroke (w->crb);
 
+    // lower contour of the rack label
     cairo_set_source_rgba(w->crb, 0.2, 0.2, 0.2, 1);
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 42 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
@@ -202,19 +205,21 @@ void draw_elem(void *w_, void* user_data) {
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw-1, (34 * w->app->hdpi)-1);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
+    // upper contour of the rack label
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     cairo_stroke (w->crb);
 
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw+1, (34 * w->app->hdpi)+1);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
+    // base colour of the rack label
     cairo_set_source_rgba(w->crb, 0.33, 0.33, 0.33, 1);
     cairo_stroke (w->crb);
 
+    // lower contour of the rack label
     cairo_set_source_rgba(w->crb, 0.2, 0.2, 0.2, 1);
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 34 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
-    cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
 
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     round_rectangle(w->crb, 20 * w->app->hdpi, 44 * w->app->hdpi,
