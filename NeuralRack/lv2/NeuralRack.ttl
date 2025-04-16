@@ -149,6 +149,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob0" ;
       lv2:name "input" ;
       pg:group nrack:G2_Pedal ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -159,6 +160,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob1" ;
       lv2:name "output" ;
       pg:group nrack:G2_Pedal ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -169,6 +171,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob2" ;
       lv2:name "output1" ;
       pg:group nrack:G4_Amp ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -199,6 +202,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob3" ;
       lv2:name "IR output" ;
       pg:group nrack:G5_IR_Left ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -209,6 +213,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob4" ;
       lv2:name "IR output1" ;
       pg:group nrack:G6_IR_Right ;
+      units:unit units:db ;
       lv2:default 0.0 ;
       lv2:minimum -20.0;
       lv2:maximum 20.0 ;
@@ -241,6 +246,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Knob5" ;
       lv2:name "input1" ;
       pg:group nrack:G4_Amp ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -374,6 +380,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_30Hz" ;
       lv2:name "30Hz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default -20.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -384,6 +391,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_125Hz" ;
       lv2:name "125Hz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -394,6 +402,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_500Hz" ;
       lv2:name "500Hz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -404,6 +413,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_2kHz" ;
       lv2:name "2kHz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -414,6 +424,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_8kHz" ;
       lv2:name "8kHz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default 0.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
@@ -424,6 +435,7 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "_16kHz" ;
       lv2:name "16kHz" ;
       pg:group nrack:G3_EQ ;
+      units:unit units:db ;
       lv2:default -20.000000 ;
       lv2:minimum -20.000000 ;
       lv2:maximum 20.000000 ;
