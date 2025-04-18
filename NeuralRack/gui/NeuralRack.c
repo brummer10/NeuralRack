@@ -192,7 +192,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[4]->data = 1;
     widget_get_png(ui->elem[4], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)1, 0.529, 0.529, 0.529, 1.0);
+    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)1, 0.373, 0.518, 0.345, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[4]->func.expose_callback = draw_eq_window;
@@ -217,7 +217,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[0]->data = 1;
     widget_get_png(ui->elem[0], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.306, 0.510, 0.584, 1.0);
+    set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.580, 0.808, 0.541, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[0]->func.expose_callback = draw_elem;
@@ -262,7 +262,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
     // rack mount background colour
-    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.569, 0.271, 0.310,1.0);
+    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.467, 0.647, 0.431,1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078,0.5);
     widget_get_png(ui->elem[3], LDVAR(texture_png));
@@ -296,7 +296,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[1]->data = 2;
     widget_get_png(ui->elem[1], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.725, 0.592, 0.388, 1.0);
+    set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.561, 0.780, 0.522, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[1]->func.expose_callback = draw_elem;
