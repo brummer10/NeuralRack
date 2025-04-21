@@ -226,21 +226,21 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[0], LDVAR(knob1_png));
     set_adjustment(ui->widget[0]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)0, 0.137, 0.141, 0.145, 1.0);
+    set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[0], (Color_state)1, (Color_mod)0, 0.078, 0.078, 0.078, 1.0);
+    set_widget_color(ui->widget[0], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
     ui->widget[1] = add_lv2_knob (ui->widget[1], ui->elem[0], 3, "Output ", ui, 510, 15, 70, 80);
     widget_get_png(ui->widget[1], LDVAR(knob1_png));
     set_adjustment(ui->widget[1]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)0, 0.137, 0.141, 0.145, 1.0);
+    set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[1], (Color_state)1, (Color_mod)0, 0.078, 0.078, 0.078, 1.0);
+    set_widget_color(ui->widget[1], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
 
     ps->ma.fbutton = add_lv2_button(ps->ma.fbutton, ui->elem[0], "", ui, 365, 44, 22, 30);
@@ -271,23 +271,59 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[24] = add_eq_button (ui->widget[24], ui->elem[3], 30, "", ui, 25,  20, 30, 30);
     widget_get_png(ui->widget[24], LDVAR(exit__png));
 
-    ui->widget[18] = add_eq_knob (ui->widget[18], ui->elem[3], 24, "30 Hz", ui, 220, 10, 60, 80);
+    ui->widget[18] = add_eq_knob (ui->widget[18], ui->elem[3], 24, "30 Hz", ui, 220, 5, 60, 90);
     set_adjustment(ui->widget[18]->adj, -20.0, -20.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
-    
-    ui->widget[19] = add_eq_knob (ui->widget[19], ui->elem[3], 25, "125 Hz", ui, 280, 10, 60, 80);
+    // controller label colour
+    set_widget_color(ui->widget[18], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[18], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[18], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
+
+    ui->widget[19] = add_eq_knob (ui->widget[19], ui->elem[3], 25, "125 Hz", ui, 280, 5, 60, 90);
     set_adjustment(ui->widget[19]->adj, 0.0, 0.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[19], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[19], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[19], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
-    ui->widget[20] = add_eq_knob (ui->widget[20], ui->elem[3], 26, "500 Hz", ui, 340, 10, 60, 80);
+    ui->widget[20] = add_eq_knob (ui->widget[20], ui->elem[3], 26, "500 Hz", ui, 340, 5, 60, 90);
     set_adjustment(ui->widget[20]->adj, 0.0, 0.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[20], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[20], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[20], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
-    ui->widget[21] = add_eq_knob (ui->widget[21], ui->elem[3], 27, "2 kHz", ui, 400, 10, 60, 80);
+    ui->widget[21] = add_eq_knob (ui->widget[21], ui->elem[3], 27, "2 kHz", ui, 400, 5, 60, 90);
     set_adjustment(ui->widget[21]->adj, 0.0, 0.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[21], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[21], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[21], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
-    ui->widget[22] = add_eq_knob (ui->widget[22], ui->elem[3], 28, "8 kHz", ui, 460, 10, 60, 80);
+    ui->widget[22] = add_eq_knob (ui->widget[22], ui->elem[3], 28, "8 kHz", ui, 460, 5, 60, 90);
     set_adjustment(ui->widget[22]->adj, 0.0, 0.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[22], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[22], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[22], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
-    ui->widget[23] = add_eq_knob (ui->widget[23], ui->elem[3], 29, "16 kHz", ui, 520, 10, 60, 80);
+    ui->widget[23] = add_eq_knob (ui->widget[23], ui->elem[3], 29, "16 kHz", ui, 520, 5, 60, 90);
     set_adjustment(ui->widget[23]->adj, -20.0, -20.0, -20.0, 20.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[23], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    // indicator ring (not used here)
+    set_widget_color(ui->widget[23], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[23], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
 // sloat B Amp Profile
     ui->elem[1] = create_widget(&ui->main, ui->win, 10, 350, 600, 110);
@@ -305,21 +341,21 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[7], LDVAR(knob1_png));
     set_adjustment(ui->widget[7]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)0, 0.137, 0.141, 0.145, 1.0);
+    set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[7], (Color_state)1, (Color_mod)0, 0.078, 0.078, 0.078, 1.0);
+    set_widget_color(ui->widget[7], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
     ui->widget[2] = add_lv2_knob (ui->widget[2], ui->elem[1], 4, "Output", ui, 510, 15, 70, 80);
     widget_get_png(ui->widget[2], LDVAR(knob1_png));
     set_adjustment(ui->widget[2]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)0, 0.137, 0.141, 0.145, 1.0);
+    set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[2], (Color_state)1, (Color_mod)0, 0.078, 0.078, 0.078, 1.0);
+    set_widget_color(ui->widget[2], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
 
     ps->mb.fbutton = add_lv2_button(ps->mb.fbutton, ui->elem[1], "", ui, 365, 44, 22, 30);
     ps->mb.fbutton->parent_struct = (void*)&ps->mb;
@@ -350,7 +386,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[3], LDVAR(knob2_png));
     set_adjustment(ui->widget[3]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)0, 0.322, 0.322, 0.322,1.0);
+    set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445,1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
@@ -375,7 +411,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[4], LDVAR(knob2_png));
     set_adjustment(ui->widget[4]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[4], (Color_state)0, (Color_mod)0, 0.322, 0.322, 0.322,1.0);
+    set_widget_color(ui->widget[4], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445,1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[4], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
