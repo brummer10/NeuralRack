@@ -146,7 +146,7 @@ void draw_eq_window(void *w_, void* user_data) {
     cairo_set_source(w->crb, pat);
     cairo_fill (w->crb);
 
-    shade_bg_color(w, 0.6);
+    shade_bg_color(w, 0.5);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
         w->width-20 * w->scale.rcscale_x * w->app->hdpi, w->height-20 * w->scale.rcscale_y * w->app->hdpi, 0.08);
     cairo_fill_preserve (w->crb);
@@ -206,7 +206,7 @@ void draw_elem(void *w_, void* user_data) {
     cairo_fill (w->crb);
     //cairo_set_source_rgba(w->crb, 0.353, 0.141, 0.141,1.0);
 
-    shade_bg_color(w, 0.6);
+    shade_bg_color(w, 0.5);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
         w->width-20 * w->scale.rcscale_x * w->app->hdpi, w->height-20 * w->scale.rcscale_y * w->app->hdpi, 0.08);
     cairo_fill_preserve (w->crb);
