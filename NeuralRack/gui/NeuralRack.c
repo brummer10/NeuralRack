@@ -192,7 +192,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[4]->data = 1;
     widget_get_png(ui->elem[4], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)1, 0.392, 0.396, 0.376, 1.0);
+    set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)1, 0.529, 0.529, 0.529, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[4], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[4]->func.expose_callback = draw_eq_window;
@@ -217,7 +217,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[0]->data = 1;
     widget_get_png(ui->elem[0], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.239, 0.333, 0.376, 1.0);
+    set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.306, 0.510, 0.584, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[0]->func.expose_callback = draw_elem;
@@ -226,21 +226,21 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[0], LDVAR(knob1_png));
     set_adjustment(ui->widget[0]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[0], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[0], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
+    set_widget_color(ui->widget[0], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
     ui->widget[1] = add_lv2_knob (ui->widget[1], ui->elem[0], 3, "Output ", ui, 510, 15, 70, 80);
     widget_get_png(ui->widget[1], LDVAR(knob1_png));
     set_adjustment(ui->widget[1]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[1], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[1], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
+    set_widget_color(ui->widget[1], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
 
     ps->ma.fbutton = add_lv2_button(ps->ma.fbutton, ui->elem[0], "", ui, 365, 44, 22, 30);
@@ -262,7 +262,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
     // rack mount background colour
-    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.392, 0.396, 0.376,1.0);
+    set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.569, 0.271, 0.310,1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078,0.5);
     widget_get_png(ui->elem[3], LDVAR(texture_png));
@@ -332,7 +332,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->elem[1]->data = 2;
     widget_get_png(ui->elem[1], LDVAR(texture_png));
     // rack mount background colour
-    set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.745, 0.255, 0.282, 1.0);
+    set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.725, 0.592, 0.388, 1.0);
     // rack mount foreground colour 
     set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078, 0.5);
     ui->elem[1]->func.expose_callback = draw_elem;
@@ -341,21 +341,21 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     widget_get_png(ui->widget[7], LDVAR(knob1_png));
     set_adjustment(ui->widget[7]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[7], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[7], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
+    set_widget_color(ui->widget[7], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
     ui->widget[2] = add_lv2_knob (ui->widget[2], ui->elem[1], 4, "Output", ui, 510, 15, 70, 80);
     widget_get_png(ui->widget[2], LDVAR(knob1_png));
     set_adjustment(ui->widget[2]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
-    set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)0, 0.437, 0.441, 0.445, 1.0);
+    set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
     // indicator ring (not used here)
     set_widget_color(ui->widget[2], (Color_state)0, (Color_mod)3, 0.686, 0.729, 0.773, 1.0);
     // controller label colour hover
-    set_widget_color(ui->widget[2], (Color_state)1, (Color_mod)0, 0.622, 0.622, 0.622, 1.0);
+    set_widget_color(ui->widget[2], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
     ps->mb.fbutton = add_lv2_button(ps->mb.fbutton, ui->elem[1], "", ui, 365, 44, 22, 30);
     ps->mb.fbutton->parent_struct = (void*)&ps->mb;
