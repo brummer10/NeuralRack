@@ -374,7 +374,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
 // IR
     ui->elem[2] = create_widget(&ui->main, ui->win, 10, 460, 600, 110);
     ui->elem[2]->parent_struct = ui;
-    ui->elem[2]->label = "Amp Profiler";
+    ui->elem[2]->label = "IR Loader";
     widget_get_png(ui->elem[2], LDVAR(texture_png));
     // rack mount background colour
     set_widget_color(ui->elem[2], (Color_state)0, (Color_mod)1, 0.176, 0.176, 0.176,1.0);

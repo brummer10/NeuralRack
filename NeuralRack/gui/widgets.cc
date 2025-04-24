@@ -137,7 +137,7 @@ char* utf8crop(char* dst, const char* src, size_t sizeDest ) {
 void draw_eq_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
     cairo_push_group (w->crb);
-    //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
+
     round_rectangle(w->crb, 0, 0, w->width, w->height, 0.08);
     use_bg_color_scheme(w, NORMAL_);
     cairo_fill_preserve (w->crb);
@@ -145,6 +145,7 @@ void draw_eq_window(void *w_, void* user_data) {
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_fill (w->crb);
+    cairo_pattern_destroy (pat);
 
     shade_bg_color(w, 0.5);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
@@ -182,21 +183,20 @@ void draw_eq_window(void *w_, void* user_data) {
     cairo_stroke (w->crb);
 
     // base colour of the rack label
-    cairo_set_source_rgba(w->crb, 0.2, 0.2, 0.2, 1);
     shade_bg_color(w, 0.8);
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 42 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
     widget_reset_scale(w);
+
     cairo_pop_group_to_source (w->crb);
     cairo_paint (w->crb);
-
 }
 
 // draw the window
 void draw_elem(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
-    //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
     cairo_push_group (w->crb);
+
     round_rectangle(w->crb, 0, 0, w->width, w->height, 0.08);
     use_bg_color_scheme(w, NORMAL_);
     cairo_fill_preserve (w->crb);
@@ -204,7 +204,7 @@ void draw_elem(void *w_, void* user_data) {
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_fill (w->crb);
-    //cairo_set_source_rgba(w->crb, 0.353, 0.141, 0.141,1.0);
+    cairo_pattern_destroy (pat);
 
     shade_bg_color(w, 0.5);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
@@ -217,7 +217,6 @@ void draw_elem(void *w_, void* user_data) {
     boxShadowOutset(w->crb,0,0,
         w->width * w->app->hdpi,w->height * w->app->hdpi, true);
     cairo_stroke (w->crb);
-
 
     cairo_text_extents_t extents;
     use_text_color_scheme(w, NORMAL_);
@@ -243,7 +242,6 @@ void draw_elem(void *w_, void* user_data) {
     cairo_stroke (w->crb);
 
     // base colour of the rack label
-    cairo_set_source_rgba(w->crb, 0.2, 0.2, 0.2, 1);
     shade_bg_color(w, 0.8);
     cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 34 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
@@ -287,16 +285,16 @@ void draw_elem(void *w_, void* user_data) {
     }
  
     widget_reset_scale(w);
+
     cairo_pop_group_to_source (w->crb);
     cairo_paint (w->crb);
-
 }
 
 // draw the ir window
 void draw_ir_elem(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
-    //cairo_set_source_rgba(w->crb, 0.223, 0.004, 0.059,1.0);
     cairo_push_group (w->crb);
+
     round_rectangle(w->crb, 0, 0, w->width, w->height, 0.08);
     use_bg_color_scheme(w, NORMAL_);
     cairo_fill_preserve (w->crb);
@@ -304,8 +302,9 @@ void draw_ir_elem(void *w_, void* user_data) {
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_fill (w->crb);
+    cairo_pattern_destroy (pat);
 
-    shade_bg_color(w, 0.8);
+    shade_bg_color(w, 0.7);
     round_rectangle(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
         w->width-20 * w->scale.rcscale_x * w->app->hdpi, w->height-20 * w->scale.rcscale_y * w->app->hdpi, 0.08);
     cairo_fill_preserve (w->crb);
@@ -392,16 +391,16 @@ void draw_ir_elem(void *w_, void* user_data) {
     }
  
     widget_reset_scale(w);
+
     cairo_pop_group_to_source (w->crb);
     cairo_paint (w->crb);
-
 }
 
 // draw the window
 static void draw_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
-    
     cairo_push_group (w->crb);
+
     set_pattern(w,&w->color_scheme->selected,&w->color_scheme->normal,BACKGROUND_);
     cairo_paint (w->crb);
 
@@ -409,11 +408,11 @@ static void draw_window(void *w_, void* user_data) {
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
     cairo_set_source(w->crb, pat);
     cairo_paint (w->crb);
+    cairo_pattern_destroy (pat);
     boxShadowOutset(w->crb,0,0,
         w->width * w->app->hdpi,w->height * w->app->hdpi, false);
     //cairo_stroke (w->crb);
 
-#ifndef HIDE_NAME
     widget_set_scale(w);
     cairo_text_extents_t extents;
     use_text_color_scheme(w, NORMAL_);
@@ -460,9 +459,10 @@ static void draw_window(void *w_, void* user_data) {
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     //use_text_color_scheme(w, NORMAL_);
     cairo_stroke (w->crb);
-#endif
+
     widget_reset_scale(w);
     cairo_new_path (w->crb);
+
     cairo_pop_group_to_source (w->crb);
     cairo_paint (w->crb);
 }
@@ -710,9 +710,9 @@ static void draw_eq_knob(void *w_, void* user_data) {
     cairo_new_path (w->crb);
 
     pat = cairo_pattern_create_linear (0, 0, 0, knob_y);
-    cairo_pattern_add_color_stop_rgba (pat, 1,  0.33, 0.33, 0.33, 1.0);
-    cairo_pattern_add_color_stop_rgba (pat, 0.75,  0.2, 0.2, 0.2, 1.0);
-    cairo_pattern_add_color_stop_rgba (pat, 0.5,  0.15, 0.15, 0.15, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 1,  0.38, 0.33, 0.33, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 0.75,  0.25, 0.2, 0.2, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 0.5,  0.2, 0.15, 0.15, 1.0);
     cairo_pattern_add_color_stop_rgba (pat, 0.25,  0.1, 0.1, 0.1, 1.0);
     cairo_pattern_add_color_stop_rgba (pat, 0,  0.05, 0.05, 0.05, 1.0);
 
@@ -729,9 +729,9 @@ static void draw_eq_knob(void *w_, void* user_data) {
     pat = NULL;
 
     pat = cairo_pattern_create_linear (0, 0, 0, knob_y);
-    cairo_pattern_add_color_stop_rgba (pat, 0,  0.363, 0.333, 0.333, 1.0);
-    cairo_pattern_add_color_stop_rgba (pat, 0.25,  0.262, 0.222, 0.222, 1.0);
-    cairo_pattern_add_color_stop_rgba (pat, 0.5,  0.15, 0.15, 0.15, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 0,  0.529, 0.529, 0.529, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 0.25,  0.329, 0.329, 0.329, 1.0);
+    cairo_pattern_add_color_stop_rgba (pat, 0.5,  0.25, 0.25, 0.25, 1.0);
     cairo_pattern_add_color_stop_rgba (pat, 0.75,  0.1, 0.1, 0.1, 1.0);
     cairo_pattern_add_color_stop_rgba (pat, 1,  0.05, 0.05, 0.05, 1.0);
 
@@ -905,31 +905,24 @@ void draw_button(void *w_, void* user_data) {
     int width = metrics.width-5;
     int height = metrics.height-5;
     if (!metrics.visible) return;
+    const int state = (int)adj_get_value(w->adj);
 
     float offset = 0.0;
-    if(w->state != 0 && (w->state <3)) {
-        offset = 1.0;
-    } else if(w->state==3) {
-        offset = 0.0;
-    }
+    if (state) offset = 1.0 ;
 
     round_rectangle(w->crb,2.0, 2.0, width, height, 0.334);
+    cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1.0);
+    cairo_fill_preserve(w->crb);
 
-    if(w->state==0) { // passive -> Off
-        cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1.0);
-        cairo_fill_preserve(w->crb);
+    if(w->state == 0 && !state) { // passive -> Off
         cairo_set_line_width(w->crb, 1.0);
     } else if(w->state==1) { // hover
-        cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1.0);
-        cairo_fill_preserve(w->crb);
         cairo_set_line_width(w->crb, 1.5);
-    } else if(w->state==2) { // pressed
-        cairo_set_source_rgba(w->crb, 0.3, 0.2, 0.2, 0.6);
-        cairo_fill_preserve(w->crb);
+        offset -= 0.5;
+    } else if(w->state==2 && !state) { // pressed
         cairo_set_line_width(w->crb, 1.0);
-    } else if(w->state==3) { // active ->On
-        cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1.0);
-        cairo_fill_preserve(w->crb);
+        offset += 0.5;
+    } else if(w->state==3 || state) { // active ->On
         cairo_set_line_width(w->crb, 2.0);
     }
     cairo_set_source_rgba(w->crb, 0.392, 0.396, 0.376, 1.0);
@@ -938,7 +931,6 @@ void draw_button(void *w_, void* user_data) {
     const int r = height < width ? (height - 12) * 0.5 : (width - 12) * 0.5;
     const int x1 = (width) * 0.5 + offset+1;
     const int y1 = (height) * 0.5 + offset+1;
-    const int state = (int)adj_get_value(w->adj);
     cairo_arc(w->crb,x1, y1, r, 0, 2 * M_PI );
     if (state) {
         cairo_pattern_t* pat = cairo_pattern_create_radial (x1, y1,
@@ -1098,7 +1090,7 @@ Widget_t* add_lv2_label(Widget_t *w, Widget_t *p, int index, const char * label,
     w->adj_y = add_adjustment(w,0.0, 0.0, 0.0, 127.0,0.01, CL_CONTINUOS);
     w->adj = w->adj_y;
     w->scale.gravity = CENTER;
-    w->flags |= USE_TRANSPARENCY | FAST_REDRAW;
+    w->flags |= USE_TRANSPARENCY;
     w->parent_struct = ui;
     w->data = index;
     w->func.expose_callback = draw_my_label;

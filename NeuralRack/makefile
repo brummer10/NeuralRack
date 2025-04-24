@@ -28,12 +28,12 @@ endif
 ifneq ($(CROSS_COMPILING), 1)
 
 # check if clang is available
-ifeq ($(TARGET), Linux)
-  CXX_VERSION = $(shell clang++ --version 2>/dev/null)
-  ifneq ($(CXX_VERSION),)
-    CXX := clang++    
-  endif
-endif
+# ifeq ($(TARGET), Linux)
+#   CXX_VERSION = $(shell clang++ --version 2>/dev/null)
+#   ifneq ($(CXX_VERSION),)
+#     CXX := clang++    
+#   endif
+# endif
 
 # get flags supported by CPU
 ifeq ($(UNAME_S), FreeBSD)
