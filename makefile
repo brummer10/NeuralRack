@@ -27,7 +27,7 @@ endif
 
 libxputty: check-and-reinit-submodules
 ifeq (,$(filter $(NOGOAL),$(MAKECMDGOALS)))
-ifeq (,$(wildcard ./libxputty/xputty/resources/texture.png))
+ifeq (,$(wildcard ./libxputty/xputty/resources/NeuralRack.png))
 	@cp ./NeuralRack/resources/*.png ./libxputty/xputty/resources/
 endif
 	@exec $(MAKE) --no-print-directory -j 1 -C $@ $(MAKECMDGOALS)
@@ -46,16 +46,10 @@ ifeq (,$(filter $(PASS),$(MAKECMDGOALS)))
 endif
 
 clean:
-	@rm -f ./libxputty/xputty/resources/texture.png
-	@rm -f ./libxputty/xputty/resources/texture2.png
-	@rm -f ./libxputty/xputty/resources/wavdir.png
-	@rm -f ./libxputty/xputty/resources/neuraldir.png
+	@rm -f ./libxputty/xputty/resources/menu.png
 	@rm -f ./libxputty/xputty/resources/norm.png
 	@rm -f ./libxputty/xputty/resources/eject.png
 	@rm -f ./libxputty/xputty/resources/exit_.png
-	@rm -f ./libxputty/xputty/resources/knob1.png
-	@rm -f ./libxputty/xputty/resources/knob2.png
-	@rm -f ./libxputty/xputty/resources/knob3.png
 	@rm -f ./libxputty/xputty/resources/NeuralRack.png
 
 features:

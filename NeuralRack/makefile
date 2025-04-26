@@ -140,6 +140,16 @@ ifeq (,$(filter clean,$(MAKECMDGOALS)))
   endif
 endif
 
+ifneq (,$(filter debug,$(MAKECMDGOALS)))
+  CXXFLAGS += -g
+  CFLAGS += -g
+  DEBUG = yes
+    else
+  CXXFLAGS += -O3
+  CFLAGS += -02
+  DEBUG = no
+endif
+
 	NAME = NeuralRack
 	space := $(subst ,, )
 	EXEC_NAME := Neuralrack
@@ -249,7 +259,7 @@ ifeq ($(TARGET), Linux)
 	-Wl,-z,noexecstack -Wl,--no-undefined -Wl,--gc-sections  -Wl,--exclude-libs,ALL \
 	`$(PKGCONFIG) --cflags --libs sndfile ` $(HAVEPA) $(HAVEJACK) $(GUI_LDFLAGS)
 
-	CXXFLAGS += -MMD -flto=auto -fPIC -DPIC -O3 -Wall -funroll-loops $(SSE_CFLAGS) \
+	CXXFLAGS += -MMD -flto=auto -fPIC -DPIC -Wall -funroll-loops $(SSE_CFLAGS) \
 	-Wno-sign-compare -Wno-reorder -Wno-infinite-recursion -DUSE_ATOM $(FFT_FLAG) \
 	-fomit-frame-pointer -fstack-protector -fvisibility=hidden -Wno-pessimizing-move \
 	-fdata-sections -I. -I./ -I./zita-resampler-1.1.0 -I$(CONV_DIR) -DNDEBUG \
@@ -278,11 +288,11 @@ ifeq ($(TARGET), Linux)
 	-Wl,-Bdynamic `pkg-config --cflags --libs cairo x11 lilv-0` \
 	-shared -lm -fPIC -Wl,-z,noexecstack -Wl,--no-undefined -Wl,--gc-sections
 
-	CFLAGS := -O2 -D_FORTIFY_SOURCE=2 -Wall -Wno-unused-result -fstack-protector -fvisibility=hidden \
+	CFLAGS := -D_FORTIFY_SOURCE=2 -Wall -Wno-unused-result -fstack-protector -fvisibility=hidden \
 	-fdata-sections -Wl,--gc-sections -Wl,-z,relro,-z,now -Wl,--exclude-libs,ALL -DUSE_ATOM
 
 else ifeq ($(TARGET), Windows)
-	CXXFLAGS += -D_FORTIFY_SOURCE=2 -I. -fPIC -DPIC -O3 -Wall -funroll-loops \
+	CXXFLAGS += -D_FORTIFY_SOURCE=2 -I. -fPIC -DPIC -Wall -funroll-loops \
 	-ffast-math -fomit-frame-pointer -fstrength-reduce -Wno-deprecated-declarations \
 	-Wno-sign-compare -Wno-reorder -Wno-infinite-recursion -DUSE_ATOM $(SSE_CFLAGS) $(FFT_FLAG) \
 	-fdata-sections -I./ -I./zita-resampler-1.1.0 -I$(CONV_DIR) -DNDEBUG \
@@ -299,7 +309,7 @@ else ifeq ($(TARGET), Windows)
 	`$(PKGCONFIG) $(PKGCONFIG_FLAGS) --cflags --libs cairo ` \
 	-L. $(LIB_DIR)libxputty.$(STATIC_LIB_EXT) -lm $(PAWPAW_LFLAGS)
 
-	CFLAGS := -O2 -D_FORTIFY_SOURCE=2 -Wall -fstack-protector -fvisibility=hidden \
+	CFLAGS := -D_FORTIFY_SOURCE=2 -Wall -fstack-protector -fvisibility=hidden \
 	-fdata-sections -Wl,--gc-sections -Wl,--exclude-libs,ALL -DUSE_ATOM
 
 	TTLUPDATE = sed -i '/lv2:binary/ s/\.so/\.dll/ ' ../bin/$(BUNDLE)/manifest.ttl
@@ -320,6 +330,8 @@ endif
 .NOTPARALLEL:
 
 all: lv2 standalone
+
+debug: all
 
 lv2: $(EXEC_NAME).$(LIB_EXT) $(EXEC_NAME)_ui.$(LIB_EXT)
 	@$(B_ECHO) "Create $(BUNDLE) $(reset)"
@@ -388,13 +400,17 @@ $(RESAMP_LIB): $(RESAMP_OBJ)
 $(EXEC_NAME)_ui.$(LIB_EXT): $(LV2_GUI).c $(GUIIMPL_SOURCE) $(UI_LIB)
 	@$(B_ECHO) "Compiling $(EXEC_NAME)_ui.$(LIB_EXT) $(reset)"
 	$(QUIET)$(CC) $(CFLAGS) $(LV2_GUI).c -L. $(UI_LIB) -o $@ $(LDFLAGS) $(GUI_LDFLAGS) -I./ $(LV2_INCLUDE)
+ifeq (,$(filter yes,$(DEBUG)))
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME)_ui.$(LIB_EXT)
+endif
 
 $(EXEC_NAME).$(LIB_EXT): $(LV2_PLUGIN).cpp $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(MODEL_LOADER)
 	@$(B_ECHO) "Compiling $(EXEC_NAME).$(LIB_EXT) $(reset)"
 	$(QUIET)$(CXX) $(CXXFLAGS) $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(LV2_INCLUDE) $(LV2_PLUGIN).cpp  \
 	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(LDFLAGS) -o $(EXEC_NAME).$(LIB_EXT)
+ifeq (,$(filter yes,$(DEBUG)))
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME).$(LIB_EXT)
+endif
 
 $(EXEC_NAME)$(EXE_EXT): $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(UI_LIB) $(STANDALONE_UI_SOURCES) $(STANDALONE).cpp $(MODEL_LOADER)
 ifneq ($(JACKFLAGS), )
@@ -402,7 +418,9 @@ ifneq ($(JACKFLAGS), )
 	$(QUIET)$(CXX) $(CXXFLAGS) $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) \
 	$(STANDALONE_INCLUDE) $(JACKFLAGS) $(MODEL_LOADER) $(STANDALONE).cpp -L. $(UI_LIB) \
 	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(JACKLDFLAGS) -o $@
+ifeq (,$(filter yes,$(DEBUG)))
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(EXEC_NAME)$(EXE_EXT)
+endif
 endif
 
 
