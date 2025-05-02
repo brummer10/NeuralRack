@@ -24,8 +24,10 @@
 #include "ParallelThread.h"
 #define STANDALONE
 #include "NeuralRack.c"
+#include "TextEntry.h"
+#include "xmessage-dialog.h"
 
-class NeuralRack
+class NeuralRack : public TextEntry
 {
 public:
 
@@ -33,20 +35,25 @@ public:
         workToDo.store(false, std::memory_order_release);
         processCounter = 0;
         settingsHaveChanged = false;
+        disableAutoConnect = false;
         s_time = 0.0;
         ui = (X11_UI*)malloc(sizeof(X11_UI));
         ui->private_ptr = NULL;
         ui->need_resize = 1;
         ui->loop_counter = 4;
         ui->uiKnowSampleRate = false;
+        ui->setVerbose = false;
         ui->uiSampleRate = 0;
         ui->f_index = 0;
+        title = "NeuralRack";
+        currentPreset = "Default";
         for(int i = 0;i<CONTROLS;i++)
             ui->widget[i] = NULL;
         getConfigFilePath();
     }
 
     ~NeuralRack() {
+        PresetListNames.clear();
         fetch.stop();
         free(ui->private_ptr);
         free(ui);
@@ -59,12 +66,50 @@ public:
         int w = 1;
         int h = 1;
         plugin_set_window_size(&w,&h,"standalone");
-        ui->win = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, w, h);
-        widget_set_title(ui->win, "NeuralRack");
-        widget_set_icon_from_png(ui->win,LDVAR(NeuralRack_png));
+        TopWin  = create_window(&ui->main, os_get_root_window(&ui->main, IS_WINDOW), 0, 0, w, h+20);
+        Widget_t* Menu = add_menubar(TopWin, "",0, 0, w, 20);
+        Menu->func.expose_callback = draw_menubar;
+        ui->win = create_widget(&ui->main, TopWin, 0, 20, w, h);
+        widget_set_title(TopWin, title.c_str());
+        widget_set_icon_from_png(TopWin,LDVAR(NeuralRack_png));
         ui->win->parent_struct = ui;
+        ui->win->private_struct = (void*)this;
         plugin_create_controller_widgets(ui,"standalone");
-        widget_show_all(ui->win);
+
+        Widget_t* EngineMenu = menubar_add_menu(Menu, "Engine");
+        Widget_t* QuitMenu = menu_add_entry(EngineMenu, "Quit");
+        QuitMenu->parent_struct = (void*)this;
+        QuitMenu->func.button_release_callback = quit_callback;
+        Widget_t* PresetMenu = menubar_add_menu(Menu, "Presets");
+        PresetLoadMenu = menu_add_submenu(PresetMenu, "Load Preset");
+        PresetLoadMenu->parent_struct = (void*)this;
+        PresetLoadMenu->func.value_changed_callback = load_preset_callback;
+        Widget_t* SaveMenu = menu_add_entry(PresetMenu, "Save as ...");
+        SaveMenu->parent_struct = (void*)this;
+        SaveMenu->func.button_release_callback = save_preset_callback;
+        Widget_t* DeleteMenu = menu_add_entry(PresetMenu, "Delete Current");
+        DeleteMenu->parent_struct = (void*)this;
+        DeleteMenu->func.button_release_callback = delete_preset_callback;
+        Widget_t* OptionMenu = menubar_add_menu(Menu, "Options");
+        ShowValues = menu_add_check_entry(OptionMenu, "Show Controller values");
+        ShowValues->parent_struct = (void*)this;
+        ShowValues->func.value_changed_callback = show_values_callback;
+        AutoConnect = menu_add_check_entry(OptionMenu, "Disable Auto Connect");
+        AutoConnect->parent_struct = (void*)this;
+        AutoConnect->func.value_changed_callback = disable_autoconnect_callback;
+        OptionMenu = menubar_add_menu(Menu, "Profiles");
+        Widget_t* ModelMenu = menu_add_entry(OptionMenu, "Tone3000 Pedal Profiles");
+        ModelMenu->parent_struct = (void*)this;
+        ModelMenu->func.button_release_callback = check_pedals_callback;
+        ModelMenu = menu_add_entry(OptionMenu, "Tone3000 Amp Profiles");
+        ModelMenu->parent_struct = (void*)this;
+        ModelMenu->func.button_release_callback = check_amps_callback;
+        ModelMenu = menu_add_entry(OptionMenu, "Tone3000 Impulse Responses");
+        ModelMenu->parent_struct = (void*)this;
+        ModelMenu->func.button_release_callback = check_irs_callback;
+
+        getPresets(ui);
+        widget_show_all(TopWin);
     }
 
     Xputty *getMain() {
@@ -76,13 +121,13 @@ public:
             defined(__NetBSD__) || defined(__OpenBSD__)
         XLockDisplay(ui->main.dpy);
         #endif
-        destroy_widget(ui->win, &ui->main);
+        destroy_widget(TopWin, &ui->main);
          #if defined(__linux__) || defined(__FreeBSD__) || \
             defined(__NetBSD__) || defined(__OpenBSD__)
         XFlush(ui->main.dpy);
         XUnlockDisplay(ui->main.dpy);
         #endif
-   }
+    }
 
     void initEQ() {
         engine.eqOnOff = 0;
@@ -275,9 +320,368 @@ public:
         workToDo.store(true, std::memory_order_release);
     }
 
+    // load a saved preset
+    void loadPreset(int v) {
+        if ( v < PresetListNames.size())
+            readPreset(PresetListNames[v]);
+    }
+
     void readConfig(std::string name = "Default") {
         try {
             std::ifstream infile(configFile);
+            std::string line;
+            std::string key;
+            std::string value;
+            std::string LoadName = "None";
+            if (infile.is_open()) {
+                infile.imbue (std::locale("C"));
+                while (std::getline(infile, line)) {
+                    std::istringstream buf(line);
+                    buf >> key;
+                    buf >> value;
+                    if (key.compare("[ShowValue]") == 0) {
+                        adj_set_value(ShowValues->adj, check_stod(value));
+                    }
+                    if (key.compare("[AutoConnect]") == 0) {
+                        adj_set_value(AutoConnect->adj, check_stod(value));
+                    }
+                    if (key.compare("[CurrentPreset]") == 0) {
+                        currentPreset =  remove_sub(line, "[CurrentPreset] ");
+                        //if (currentPreset.compare("Default") != 0) {
+                        //    readPreset(currentPreset);
+                        //    break;
+                        //}
+                    }
+                    if (key.compare("[Connection]") == 0) {
+                        std::string value2;
+                        buf >> value2;
+                        connections.push_back(std::tuple<std::string, std::string>(
+                            value, value2));
+                    }
+                    if (key.compare("[Preset]") == 0) LoadName = remove_sub(line, "[Preset] ");
+                    if (name.compare(LoadName) == 0) {
+                        if (key.compare("[CONTROLS]") == 0) {
+                            for (int i = 0; i < CONTROLS; i++) {
+                                adj_set_value(ui->widget[i]->adj, check_stod(value));
+                                buf >> value;
+                            }
+                        } else if (key.compare("[Model]") == 0) {
+                            engine.model_file = remove_sub(line, "[Model] ");
+                            engine._ab.fetch_add(1, std::memory_order_relaxed);
+                        } else if (key.compare("[Model1]") == 0) {
+                            engine.model_file1 = remove_sub(line, "[Model1] ");
+                            engine._ab.fetch_add(2, std::memory_order_relaxed);
+                        } else if (key.compare("[IrFile]") == 0) {
+                            engine.ir_file = remove_sub(line, "[IrFile] ");
+                            engine._cd.fetch_add(1, std::memory_order_relaxed);
+                        } else if (key.compare("[IrFile1]") == 0) {
+                            engine.ir_file1 = remove_sub(line, "[IrFile1] ");
+                            engine._cd.fetch_add(2, std::memory_order_relaxed);
+                        }
+                    }
+                    key.clear();
+                    value.clear();
+                }
+                infile.close();
+                workToDo.store(true, std::memory_order_release);
+                currentPreset = name;
+                title = "NeuralRack - " + currentPreset;
+                widget_set_title(TopWin, title.c_str());
+            }
+        } catch (std::ifstream::failure const&) {
+            return;
+        }
+    }
+
+    void saveConnections(std::string in_port, std::string out_port) {
+        connections.push_back(std::tuple<std::string, std::string>(
+            in_port, out_port));
+    }
+
+    void getConnections(std::vector<std::tuple< std::string, std::string> > *_connections) {
+        if (disableAutoConnect) connections.clear();
+        *_connections = connections;
+    }
+
+    void clearConnections() {
+        connections.clear();
+    }
+
+    void cleanup() {
+        fetch.stop();
+        if (settingsHaveChanged)
+            saveConfig();
+        connections.clear();
+        plugin_cleanup(ui);
+        // Xputty free all memory used
+        main_quit(&ui->main);
+    }
+
+private:
+    ParallelThread          fetch;
+    X11_UI*                 ui;
+    neuralrack::Engine      engine;
+    Widget_t*               TopWin;
+    Widget_t*               PresetLoadMenu;
+    Widget_t*               ShowValues;
+    Widget_t*               AutoConnect;
+    int                     processCounter;
+    bool                    settingsHaveChanged;
+    bool                    disableAutoConnect;
+    std::atomic<bool>       workToDo;
+    std::string             configFile;
+    std::string             presetFile;
+    double                  s_time;
+    std::vector<std::string> PresetListNames;
+    std::string             title;
+    std::string             currentPreset;
+    std::vector<std::tuple< std::string, std::string> > connections;
+
+    void createPresetMenu() {
+        Widget_t *menu = PresetLoadMenu->childlist->childs[0];
+        Widget_t *view_port =  menu->childlist->childs[0];
+        int i = view_port->childlist->elem-1;
+        for(;i>-1;i--) {
+            menu_remove_item(menu,view_port->childlist->childs[i]);
+        }
+        for (auto i = PresetListNames.begin(); i != PresetListNames.end(); i++) {
+            menu_add_entry(PresetLoadMenu, (*i).c_str());
+        }
+    }
+
+    static void draw_menubar(void *w_, void* user_data) noexcept{
+        Widget_t *w = (Widget_t*)w_;
+        Metrics_t metrics;
+        os_get_window_metrics(w, &metrics);
+        int width = metrics.width;
+        int height = metrics.height;
+        if (!metrics.visible) return;
+        use_bg_color_scheme(w, NORMAL_);
+        cairo_rectangle(w->crb,0,0,width,height);
+        cairo_fill (w->crb);
+        use_bg_color_scheme(w, ACTIVE_);
+        cairo_rectangle(w->crb,0,height-2,width,2);
+        cairo_fill(w->crb);
+    }
+
+    static void quit_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        if (w->flags & HAS_POINTER){
+            self->quitGui();
+        }
+    }
+
+    static void openSite(std::string url) {
+        std::string op = "";
+        #if defined(__linux__) || defined(__FreeBSD__) || \
+            defined(__NetBSD__) || defined(__OpenBSD__)
+        op =  std::string("xdg-open ").append(url);
+        #else
+        op = std::string("start ").append(url);
+        #endif
+        system(op.c_str());
+    }
+
+    static void check_pedals_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (w->flags & HAS_POINTER){
+            openSite("\'https://www.tone3000.com/search?gear=pedal&order=newest\'");
+            
+        }
+    }
+
+    static void check_amps_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (w->flags & HAS_POINTER){
+            openSite("\'https://www.tone3000.com/search?gear=amp&order=newest\'");
+        }
+    }
+
+    static void check_irs_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (w->flags & HAS_POINTER){
+            openSite("\'https://www.tone3000.com/search?gear=ir&order=newest\'");
+        }
+    }
+
+    static void show_values_callback(void *w_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        if (adj_get_value(w->adj)) self->ui->setVerbose = true;
+        else self->ui->setVerbose = false;
+        for(int i = 0;i<CONTROLS;i++) {
+            widget_draw(self->ui->widget[i], NULL);
+        }
+    }
+
+    static void disable_autoconnect_callback(void *w_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        if (adj_get_value(w->adj)) self->disableAutoConnect = true;
+        else self->disableAutoConnect = false;
+    }
+
+    void getPresets(X11_UI *ui) {
+        try {
+            std::ifstream infile(presetFile);
+            std::string line;
+            std::string key;
+            std::string value;
+            if (infile.is_open()) {
+                PresetListNames.clear();
+                infile.imbue (std::locale("C"));
+                while (std::getline(infile, line)) {
+                    std::istringstream buf(line);
+                    buf >> key;
+                    buf >> value;
+                    if (key.compare("[Preset]") == 0) {
+                        PresetListNames.push_back(remove_sub(line, "[Preset] "));
+                    }
+                    key.clear();
+                    value.clear();
+                }
+                infile.close();
+            }
+        } catch (std::ifstream::failure const&) {
+            return;
+        }
+        createPresetMenu();
+    }
+
+    // remove a preset from the config file
+    void removePreset(std::string LoadName) {
+        std::ifstream infile(presetFile);
+        std::ofstream outfile(presetFile + "temp");
+        bool save = true;
+        std::string line;
+        std::string key;
+        std::string value;
+        std::string ListName;
+        if (infile.is_open() && outfile.is_open()) {
+            while (std::getline(infile, line)) {
+                std::istringstream buf(line);
+                buf >> key;
+                buf >> value;
+                if (key.compare("[Preset]") == 0) {
+                    ListName = remove_sub(line, "[Preset] ");
+                }
+                if (ListName.compare(LoadName) == 0) {
+                    save = false;
+                } else {
+                    save = true;
+                }
+                if (save) outfile << line<< std::endl;
+                key.clear();
+                value.clear();
+            }
+        infile.close();
+        outfile.close();
+        std::remove(presetFile.c_str());
+        std::rename((presetFile + "temp").c_str(), presetFile.c_str());
+        getPresets(ui);
+        }
+    }
+
+    static void question_response(void *w_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if(user_data !=NULL) {
+            NeuralRack *self = static_cast<NeuralRack*>(w->private_struct);
+            int response = *(int*)user_data;
+            if(response == 0) {
+                self->removePreset(self->currentPreset);
+                self->currentPreset = "Default";
+                self->title = "NeuralRack - " + self->currentPreset;
+                widget_set_title(self->TopWin, self->title.c_str());
+            }
+        }
+    }
+
+    // delete menu callback
+    static void delete_preset_callback(void* w_, void* item_, void* data_) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        std::string message = "Really delete preset " + self->currentPreset + "?";
+        Widget_t *dia = open_message_dialog(self->ui->win, QUESTION_BOX, "Delete Current Preset", 
+            message.c_str(),NULL);
+        os_set_transient_for_hint(self->ui->win, dia);
+        self->ui->win->func.dialog_callback = question_response;
+   }
+
+    static void save_response(void *w_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if(user_data !=NULL && strlen(*(const char**)user_data)) {
+            NeuralRack *self = static_cast<NeuralRack*>(w->private_struct);
+            std::string lname(*(const char**)user_data);
+            self->savePreset(lname, true);
+        }
+    }
+
+    // pop up a text entry to enter a name for a preset to save
+    void save_as() {
+        Widget_t* dia = showTextEntry(ui->win, 
+                    "NeuralRack - save preset as:", "Save preset as:");
+        int x1, y1;
+        os_translate_coords( ui->win, ui->win->widget, 
+            os_get_root_window(ui->win->app, IS_WIDGET), 0, 0, &x1, &y1);
+        os_move_window(ui->win->app->dpy,dia,x1+190, y1+80);
+        ui->win->func.dialog_callback = save_response;
+    }
+
+    // save menu callback
+    static void save_preset_callback(void* w_, void* item_, void* data_) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        self->save_as();
+    }
+
+    // load a saved preset
+    static void load_preset_callback(void* w_, void* data_) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        self->loadPreset((int)adj_get_value(w->adj));
+    }
+
+    float check_stod (const std::string& str) {
+        char* point = localeconv()->decimal_point;
+        if (std::string(".") != point) {
+            std::string::size_type point_it = str.find(".");
+            std::string temp_str = str;
+            if (point_it != std::string::npos)
+                temp_str.replace(point_it, point_it + 1, point);
+            return std::stod(temp_str);
+        } else return std::stod(str);
+    }
+
+    std::string remove_sub(std::string a, std::string b) {
+        std::string::size_type fpos = a.find(b);
+        if (fpos != std::string::npos )
+            a.erase(a.begin() + fpos, a.begin() + fpos + b.length());
+        return (a);
+    }
+
+    void getConfigFilePath() {
+         if (getenv("XDG_CONFIG_HOME")) {
+            std::string path = getenv("XDG_CONFIG_HOME");
+            configFile = path + "/neuralrack.conf";
+            presetFile = path + "/neuralrack.presets";
+        } else {
+        #if defined(__linux__) || defined(__FreeBSD__) || \
+            defined(__NetBSD__) || defined(__OpenBSD__)
+            std::string path = getenv("HOME");
+            configFile = path +"/.config/neuralrack.conf";
+            presetFile = path +"/.config/neuralrack.presets";
+        #else
+            std::string path = getenv("APPDATA");
+            configFile = path +"\\.config\\neuralrack.conf";
+            presetFile = path +"\\.config\\neuralrack.presets";
+        #endif
+       }
+    }
+
+    void readPreset(std::string name = "Default") {
+        try {
+            std::ifstream infile(presetFile);
             std::string line;
             std::string key;
             std::string value;
@@ -314,79 +718,55 @@ public:
                 }
                 infile.close();
                 workToDo.store(true, std::memory_order_release);
+                currentPreset = name;
+                title = "NeuralRack - " + currentPreset;
+                widget_set_title(TopWin, title.c_str());
             }
         } catch (std::ifstream::failure const&) {
             return;
         }
     }
 
-    void cleanup() {
-        fetch.stop();
-        if (settingsHaveChanged)
-            saveConfig();
-        plugin_cleanup(ui);
-        // Xputty free all memory used
-        main_quit(&ui->main);
+    void writePreset(std::ofstream *outfile, std::string name) {
+        *outfile << "[Preset] " << name << std::endl;
+        *outfile << "[CONTROLS] ";
+        for(int i = 0;i<CONTROLS;i++) {
+            *outfile << adj_get_value(ui->widget[i]->adj) << " ";
+        }
+        *outfile << std::endl;
+        *outfile << "[Model] " << engine.model_file << std::endl;
+        *outfile << "[Model1] " << engine.model_file1 << std::endl;
+        *outfile << "[IrFile] " << engine.ir_file << std::endl;
+        *outfile << "[IrFile1] " << engine.ir_file1 << std::endl;
     }
 
-private:
-    ParallelThread          fetch;
-    X11_UI*                 ui;
-    neuralrack::Engine     engine;
-    int                     processCounter;
-    bool                    settingsHaveChanged;
-    std::atomic<bool>       workToDo;
-    std::string             configFile;
-    double                  s_time;
-
-    float check_stod (const std::string& str) {
-        char* point = localeconv()->decimal_point;
-        if (std::string(".") != point) {
-            std::string::size_type point_it = str.find(".");
-            std::string temp_str = str;
-            if (point_it != std::string::npos)
-                temp_str.replace(point_it, point_it + 1, point);
-            return std::stod(temp_str);
-        } else return std::stod(str);
+    void savePreset(std::string name = "Default",  bool append = false) {
+        if (std::find(PresetListNames.begin(), PresetListNames.end(), name) != PresetListNames.end()) {
+            removePreset(name);
+        } 
+        std::ofstream outfile(presetFile, append ? std::ios::app : std::ios::trunc);
+        if (outfile.is_open()) {
+            writePreset(&outfile, name);
+            outfile.close();
+        }
+        currentPreset = name;
+        title = "NeuralRack - " + currentPreset;
+        widget_set_title(TopWin, title.c_str());
+        getPresets(ui);
     }
 
-    std::string remove_sub(std::string a, std::string b) {
-        std::string::size_type fpos = a.find(b);
-        if (fpos != std::string::npos )
-            a.erase(a.begin() + fpos, a.begin() + fpos + b.length());
-        return (a);
-    }
-
-    void getConfigFilePath() {
-         if (getenv("XDG_CONFIG_HOME")) {
-            std::string path = getenv("XDG_CONFIG_HOME");
-            configFile = path + "/neuralrack.conf";
-        } else {
-        #if defined(__linux__) || defined(__FreeBSD__) || \
-            defined(__NetBSD__) || defined(__OpenBSD__)
-            std::string path = getenv("HOME");
-            configFile = path +"/.config/neuralrack.conf";
-        #else
-            std::string path = getenv("APPDATA");
-            configFile = path +"\\.config\\neuralrack.conf";
-        #endif
-       }
-    }
-
-    void saveConfig(std::string name = "Default",  bool append = false) {
-        std::ofstream outfile(configFile, append ? std::ios::app : std::ios::trunc);
+    void saveConfig() {
+        std::ofstream outfile(configFile, std::ios::trunc);
         if (outfile.is_open()) {
             outfile.imbue (std::locale("C"));
-            outfile << "[Preset] " << name << std::endl;
-            outfile << "[CONTROLS] ";
-            for(int i = 0;i<CONTROLS;i++) {
-                outfile << adj_get_value(ui->widget[i]->adj) << " ";
+            outfile << "[ShowValue] " << adj_get_value(ShowValues->adj) << std::endl;
+            outfile << "[AutoConnect] " << adj_get_value(AutoConnect->adj) << std::endl;
+            outfile << "[CurrentPreset] " << currentPreset << std::endl;
+            for (auto it = connections.begin(); it != connections.end(); it++) {
+                outfile << "[Connection] "  << std::get<0>(*it) << " " <<  std::get<1>(*it) << "\n";
             }
-            outfile << std::endl;
-            outfile << "[Model] " << engine.model_file << std::endl;
-            outfile << "[Model1] " << engine.model_file1 << std::endl;
-            outfile << "[IrFile] " << engine.ir_file << std::endl;
-            outfile << "[IrFile1] " << engine.ir_file1 << std::endl;
+
+            writePreset(&outfile, "Default");
             outfile.close();
         }
     }

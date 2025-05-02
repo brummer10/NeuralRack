@@ -386,14 +386,14 @@ static void draw_window(void *w_, void* user_data) {
 
     cairo_set_font_size (w->crb, w->app->big_font+8);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw-0.5, (w->scale.init_y+42 * w->app->hdpi)-0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw-0.5, (42 * w->app->hdpi)-0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // upper contour of the main label
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     cairo_stroke (w->crb);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw+0.5, (w->scale.init_y+42 * w->app->hdpi)+0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw+0.5, (42 * w->app->hdpi)+0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // lower contour of the main label
@@ -403,16 +403,16 @@ static void draw_window(void *w_, void* user_data) {
 
     // base colour of the main label
     cairo_set_source_rgba(w->crb, 0.6, 0.6, 0.6, 1);
-    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw, w->scale.init_y+42 * w->app->hdpi);
+    cairo_move_to (w->crb, (w->scale.init_width*0.5)-tw, 42 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
 
-    cairo_move_to (w->crb, 10 * w->app->hdpi, w->scale.init_y+54 * w->app->hdpi);
-    cairo_line_to (w->crb, 600 * w->app->hdpi, w->scale.init_y+54 * w->app->hdpi);
+    cairo_move_to (w->crb, 10 * w->app->hdpi, 54 * w->app->hdpi);
+    cairo_line_to (w->crb, 600 * w->app->hdpi, 54 * w->app->hdpi);
     cairo_set_source_rgba(w->crb, 0.33, 0.33, 0.33, 1);
     cairo_stroke (w->crb);
 
-    cairo_move_to (w->crb, 10 * w->app->hdpi, w->scale.init_y+53 * w->app->hdpi);
-    cairo_line_to (w->crb, 600 * w->app->hdpi, w->scale.init_y+53 * w->app->hdpi);
+    cairo_move_to (w->crb, 10 * w->app->hdpi, 53 * w->app->hdpi);
+    cairo_line_to (w->crb, 600 * w->app->hdpi, 53 * w->app->hdpi);
     cairo_set_source_rgba(w->crb, 0.01, 0.01, 0.01, 1);
     cairo_stroke (w->crb);
 
@@ -502,7 +502,8 @@ void setKnobFrame(Widget_t* w, int x, int y, int wi, int h) {
 }
 
 static void draw_my_knob(void *w_, void* user_data) {
-    Widget_t *w = (Widget_t*)w_;    
+    Widget_t *w = (Widget_t*)w_;
+    X11_UI* ui = (X11_UI*)w->parent_struct;
 
     /** get size for the knob **/
     const int width = w->width;
@@ -563,38 +564,40 @@ static void draw_my_knob(void *w_, void* user_data) {
         cairo_new_path (w->crb);
 
         /** show value on the kob**/
-        if (w->state && (strcmp(w->label, "") != 0)) {
-        use_text_color_scheme(w, get_color_state(w));
-        cairo_select_font_face (w->crb, "Sans", CAIRO_FONT_SLANT_NORMAL,
-                                   CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size (w->crb, (w->app->normal_font-1)/w->scale.ascale);
-        char s[17];
-        char sa[17];
-        int o = 0;
-        float value = adj_get_value(w->adj);
-        float v = copysign(1, (int)(value * 10));
-        value = copysign(value, v);
-        if (fabs(w->adj->step)>0.99) {
-            snprintf(s, 16,"%d",  (int) value);
-            o = 4;
-        } else if (fabs(w->adj->step)<0.09) {
-            snprintf(s, 16, "%.2f", value);
-            o = 1;
-        } else {
-            snprintf(s, 16, "%.1f", value);
-        }
-        snprintf(sa, strlen(s),"%s",  "000000000000000");
-        cairo_text_extents(w->crb, sa, &extents);
-        int wx = extents.width * 0.5;
-        cairo_text_extents(w->crb, s, &extents);
-        cairo_move_to (w->crb, knobx1 - wx - o, knoby1+extents.height/2);
-        cairo_show_text(w->crb, s);
-        cairo_new_path (w->crb);
+        if ((w->state || ui->setVerbose) && (strcmp(w->label, "") != 0)) {
+            use_text_color_scheme(w, get_color_state(w));
+            cairo_select_font_face (w->crb, "Sans", CAIRO_FONT_SLANT_NORMAL,
+                                       CAIRO_FONT_WEIGHT_BOLD);
+            cairo_set_font_size (w->crb, (w->app->normal_font-1)/w->scale.ascale);
+            char s[17];
+            char sa[17];
+            int o = 0;
+            float value = adj_get_value(w->adj);
+            float v = copysign(1, (int)(value * 10));
+            value = copysign(value, v);
+            if (fabs(w->adj->step)>0.99) {
+                snprintf(s, 16,"%d",  (int) value);
+                o = 4;
+            } else if (fabs(w->adj->step)<0.09) {
+                snprintf(s, 16, "%.2f", value);
+                o = 1;
+            } else {
+                snprintf(s, 16, "%.1f", value);
+            }
+            snprintf(sa, strlen(s),"%s",  "000000000000000");
+            cairo_text_extents(w->crb, sa, &extents);
+            int wx = extents.width * 0.5;
+            cairo_text_extents(w->crb, s, &extents);
+            cairo_move_to (w->crb, knobx1 - wx - o, knoby1+extents.height/2);
+            cairo_show_text(w->crb, s);
+            cairo_new_path (w->crb);
         }
     }
 
     /** show label below the knob**/
     use_fg_color_scheme(w, get_color_state(w));
+    cairo_select_font_face (w->crb, "Sans", CAIRO_FONT_SLANT_NORMAL,
+                               CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size (w->crb, (w->app->normal_font+2)/w->scale.ascale);
     cairo_text_extents(w->crb,w->label , &extents);
     cairo_move_to (w->crb, (width*0.5)-(extents.width/2), height + (height * 0.15)-(extents.height*0.1));
@@ -728,6 +731,19 @@ Widget_t* add_lv2_switch(Widget_t *w, Widget_t *p, int index, const char * label
     return w;
 }
 
+void setInvKnobFrame(Widget_t* w, int x, int y, int wi, int h) {
+    Colors *c = get_color_scheme(w, NORMAL_);
+    cairo_pattern_t *pat = cairo_pattern_create_linear (x, y, x, y + h);
+    cairo_pattern_add_color_stop_rgba
+        (pat, 1, c->bg[0]*2.0, c->bg[1]*2.0, c->bg[2]*2.0,1.0);
+    cairo_pattern_add_color_stop_rgba
+        (pat, 0.8, c->bg[0]*1.5, c->bg[1]*1.5, c->bg[2]*1.5,1.0);
+    cairo_pattern_add_color_stop_rgba 
+        (pat, 0, c->bg[0]*0.1, c->bg[1]*0.1, c->bg[2]*0.1,1.0);
+    cairo_set_source(w->crb, pat);
+    cairo_pattern_destroy (pat);
+}
+
 void draw_image_button(Widget_t *w, int width_t, int height_t, float offset) {
     int width, height;
     os_get_surface_size(w->image, &width, &height);
@@ -751,38 +767,43 @@ void draw_button(void *w_, void* user_data) {
     if (!w) return;
     Metrics_t metrics;
     os_get_window_metrics(w, &metrics);
-    int width = metrics.width-5;
-    int height = metrics.height-5;
+    int width = metrics.width;
+    int height = metrics.height;
     if (!metrics.visible) return;
     const int state = (int)adj_get_value(w->adj);
 
     float offset = 0.0;
     if (state) offset = 1.0 ;
 
-    round_rectangle(w->crb,2.0, 2.0, width, height, 0.334);
-    cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1.0);
-    cairo_fill_preserve(w->crb);
+    round_rectangle(w->crb,0.0, 0.0, width, height, 0.334);
+    cairo_set_source_rgba(w->crb, 0.003, 0.003, 0.003, 1);
+    cairo_fill_preserve (w->crb);
+    cairo_fill(w->crb);
+    round_rectangle(w->crb,1.0, 1.0, width-2, height-2, 0.334);
+    cairo_set_source_rgba(w->crb, 0.103, 0.103, 0.103, 1);
+    cairo_fill_preserve (w->crb);
 
     if(w->state == 0 && !state) { // passive -> Off
         setKnobFrame(w,  2, 2, width, height);
         cairo_set_line_width(w->crb, 1.0);
     } else if(w->state==1) { // hover
-        if (!state) setKnobFrame(w,  2, 2, width, height);
+        if (!state) setKnobFrame(w,  1, 1, width-2, height-2);
+        else setInvKnobFrame(w,  1, 1, width-2, height-2);
         cairo_set_line_width(w->crb, 1.5);
         offset -= 0.5;
     } else if(w->state==2 && !state) { // pressed
-        cairo_set_source_rgba(w->crb, 0.01, 0.01, 0.01, 1.0);
+        cairo_set_source_rgba(w->crb, 0.033, 0.033, 0.033, 1.0);
         cairo_set_line_width(w->crb, 1.0);
         offset += 0.5;
     } else if(w->state==3 || state) { // active ->On
-        cairo_set_source_rgba(w->crb, 0.01, 0.01, 0.01, 1.0);
+        setInvKnobFrame(w,  1, 1, width-2, height-2);
         cairo_set_line_width(w->crb, 2.0);
     }
     cairo_stroke(w->crb);
 
-    const int r = height < width ? (height - 12) * 0.5 : (width - 12) * 0.5;
-    const int x1 = (width) * 0.5 + offset+1;
-    const int y1 = (height) * 0.5 + offset+1;
+    const int r = height < width ? (height - 16) * 0.5 : (width - 16) * 0.5;
+    const int x1 = (width-4) * 0.5 + offset+1;
+    const int y1 = (height-4) * 0.5 + offset+1;
     cairo_arc(w->crb,x1, y1, r, 0, 2 * M_PI );
     if (state) {
         cairo_pattern_t* pat = cairo_pattern_create_radial (x1, y1,
@@ -810,7 +831,7 @@ void draw_button(void *w_, void* user_data) {
     cairo_new_path (w->crb);
 
     if (w->image) {
-        draw_image_button(w, width, height,offset);
+        draw_image_button(w, width-4, height-4,offset);
     }
 }
 
@@ -1041,7 +1062,7 @@ void draw_my_combobox(void *w_, void* user_data) {
 
 Widget_t* add_lv2_button(Widget_t *w, Widget_t *p, const char * label,
                                 X11_UI* ui, int x, int y, int width, int height) {
-    w = add_combobox(p, label, x-300, y, width+300, height);
+    w = add_combobox(p, label, x-280, y, width+280, height);
     w->parent_struct = ui;
     w->func.expose_callback = dummy_expose; //draw_my_combobox;
     w->childlist->childs[0]->func.expose_callback = draw_my_button;

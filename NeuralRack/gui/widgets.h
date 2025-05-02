@@ -58,6 +58,7 @@ typedef struct {
     int loop_counter;
     bool uiKnowSampleRate;
     int uiSampleRate;
+    bool setVerbose;
     Interface itf;
 } X11_UI;
 

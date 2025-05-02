@@ -107,6 +107,7 @@ int main(int argc, char *argv[]){
     if(!xpa.openStream(1, 2, &process, nullptr)) {
         #if defined(HAVE_JACK)
         startJack();
+        connectPorts();
         #else    
         r->quitGui();
         #endif
@@ -123,7 +124,6 @@ int main(int argc, char *argv[]){
 
     main_run(r->getMain());
 
-    r->cleanup();
     #if defined(HAVE_PA)
     if (runPA) xpa.stopStream();
     #if defined(HAVE_JACK)
@@ -133,6 +133,7 @@ int main(int argc, char *argv[]){
     quitJack();
     #endif
 
+    r->cleanup();
     delete r;
 
     printf("bye bye\n");

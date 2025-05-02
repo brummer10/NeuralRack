@@ -231,6 +231,7 @@ static LV2UI_Handle instantiate(const LV2UI_Descriptor * descriptor,
     ui->need_resize = 1;
     ui->loop_counter = 4;
     ui->uiKnowSampleRate = false;
+    ui->setVerbose = false;
     ui->uiSampleRate = 0;
     ui->f_index = 0;
 

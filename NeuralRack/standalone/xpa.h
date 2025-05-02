@@ -105,6 +105,7 @@ public:
             frames = 256;
         } else if (std::strcmp(it->hostName, "JACK Audio Connection Kit") == 0) {
             #if defined(HAVE_JACK)
+            devices.clear();
             return false;
             #endif
         }
