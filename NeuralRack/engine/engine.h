@@ -37,6 +37,7 @@
 #include "dcblocker.cc"
 #include "eq.cc"
 #include "NoiseGate.cc"
+#include "Compressor.cc"
 
 #include "NeuralModelLoader.h"
 #include "fftconvolver.h"
@@ -98,6 +99,7 @@ public:
     ConvolverSelector            conv1;
     eq::Dsp*                     peq;
     noisegate::Dsp*              ngate;
+    compressor::Dsp*             comp;
 
     float                        inputGain;
     float                        inputGain1;
@@ -119,6 +121,7 @@ public:
     uint32_t                     buffersize;
     uint32_t                     eqOnOff;
     uint32_t                     ngOnOff;
+    uint32_t                     compOnOff;
     int                          phaseOffset;
 
     std::string                  model_file;
@@ -182,6 +185,7 @@ inline Engine::Engine() :
     dcb(dcblocker::plugin()),
     peq(eq::plugin()),
     ngate(noisegate::plugin()),
+    comp(compressor::plugin()),
     slotA(&Sync),
     slotB(&Sync),
     conv(),
@@ -207,6 +211,7 @@ inline Engine::~Engine(){
     dcb->del_instance(dcb);
     peq->del_instance(peq);
     ngate->del_instance(ngate);
+    comp->del_instance(comp);
     slotA.cleanUp();
     slotB.cleanUp();
     conv.stop_process();
@@ -220,6 +225,7 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
     dcb->init(rate);
     peq->init(rate);
     ngate->init(rate);
+    comp->init(rate);
     slotA.init(rate);
     slotB.init(rate);
 
@@ -231,6 +237,7 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
     bypass = 0;
     eqOnOff = 0;
     ngOnOff = 0;
+    compOnOff = 0;
     normSlotA = 0;
     normSlotB = 0;
     inputGain = 0.0;
@@ -435,6 +442,10 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     // run noisegate
     if (ngOnOff)
         ngate->compute(n_samples, output);
+
+    // run compressor
+    if (compOnOff)
+        comp->compute(n_samples, output);
 
     // process input volume slot A
     if (_neuralA.load(std::memory_order_acquire)) {

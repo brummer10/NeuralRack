@@ -28,6 +28,11 @@ nrack:G0_Default
     lv2:symbol "Default" ;
     rdfs:label "Default" .
 
+nrack:G01_Compressor
+    a param:ControlGroup ;
+    lv2:symbol "Compressor" ;
+    rdfs:label "Compressor" .
+
 nrack:G1_NoiseGate
     a param:ControlGroup ;
     lv2:symbol "NoiseGate" ;
@@ -468,6 +473,57 @@ The resulting latency will be reported to the host so that it could be compensat
       lv2:symbol "Noisegate" ;
       lv2:name "NG on/off" ;
       pg:group nrack:G1_NoiseGate ;
+      lv2:default 0.0 ;
+      lv2:minimum 0.0 ;
+      lv2:maximum 1.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 33 ;
+      lv2:symbol "CThreshold" ;
+      lv2:name "Threshold" ;
+      pg:group nrack:G01_Compressor ;
+      lv2:default -12.5 ;
+      lv2:minimum -96.0 ;
+      lv2:maximum 10.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 34 ;
+      lv2:symbol "Attack" ;
+      lv2:name "Attack" ;
+      pg:group nrack:G01_Compressor ;
+      lv2:default 0.02 ;
+      lv2:minimum 0.0 ;
+      lv2:maximum 1.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 35 ;
+      lv2:symbol "Release" ;
+      lv2:name "Release" ;
+      pg:group nrack:G01_Compressor ;
+      lv2:default 0.5 ;
+      lv2:minimum 0.0 ;
+      lv2:maximum 1.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 36 ;
+      lv2:symbol "Ratio" ;
+      lv2:name "Ratio" ;
+      pg:group nrack:G01_Compressor ;
+      lv2:default 3.0 ;
+      lv2:minimum 1.0 ;
+      lv2:maximum 20.0 ;
+   ], [
+      a lv2:InputPort ,
+          lv2:ControlPort ;
+      lv2:index 37 ;
+      lv2:portProperty lv2:toggled ;
+      lv2:symbol "CompOnOff" ;
+      lv2:name "Compressor on/off" ;
+      pg:group nrack:G01_Compressor ;
       lv2:default 0.0 ;
       lv2:minimum 0.0 ;
       lv2:maximum 1.0 ;

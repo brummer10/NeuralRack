@@ -107,7 +107,6 @@ int main(int argc, char *argv[]){
     if(!xpa.openStream(1, 2, &process, nullptr)) {
         #if defined(HAVE_JACK)
         startJack();
-        connectPorts();
         #else    
         r->quitGui();
         #endif

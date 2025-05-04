@@ -270,6 +270,21 @@ public:
             case 32:
                 engine.ngOnOff = static_cast<uint32_t>(value);
             break;
+            case 33:
+                engine.comp->threshold =  value;
+            break;
+            case 34:
+                engine.comp->attack =  value;
+            break;
+            case 35:
+                engine.comp->release =  value;
+            break;
+            case 36:
+                engine.comp->ratio =  value;
+            break;
+            case 37:
+                engine.compOnOff = static_cast<uint32_t>(value);
+            break;
             default:
             break;
         }
@@ -363,6 +378,7 @@ public:
                         if (key.compare("[CONTROLS]") == 0) {
                             for (int i = 0; i < CONTROLS; i++) {
                                 adj_set_value(ui->widget[i]->adj, check_stod(value));
+                                if (!buf) break;
                                 buf >> value;
                             }
                         } else if (key.compare("[Model]") == 0) {
@@ -697,6 +713,7 @@ private:
                         if (key.compare("[CONTROLS]") == 0) {
                             for (int i = 0; i < CONTROLS; i++) {
                                 adj_set_value(ui->widget[i]->adj, check_stod(value));
+                                if (!buf) break;
                                 buf >> value;
                             }
                         } else if (key.compare("[Model]") == 0) {

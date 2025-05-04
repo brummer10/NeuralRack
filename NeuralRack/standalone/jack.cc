@@ -22,6 +22,7 @@ jack_port_t *in_port;
 jack_port_t *midi_port;
 jack_port_t *out_port;
 jack_port_t *out1_port;
+bool run_process = false;
 
 void jack_shutdown (void *arg) {
     fprintf (stderr, "jack shutdown, exit now \n");
@@ -72,6 +73,7 @@ void process_midi(void* midi_input_port_buf) {
 }
 
 int jack_process(jack_nframes_t nframes, void *arg) {
+    if (!run_process) return 0;
     void *midi_in = jack_port_get_buffer (midi_port, nframes);
     float *input = static_cast<float *>(jack_port_get_buffer (in_port, nframes));
     float *output = static_cast<float *>(jack_port_get_buffer (out_port, nframes));
@@ -85,6 +87,29 @@ int jack_process(jack_nframes_t nframes, void *arg) {
     r->process(nframes, output, output1);
 
     return 0;
+}
+
+void replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if(start_pos == std::string::npos)
+    return ;
+    str.replace(start_pos, from.length(), to);
+    return ;
+}
+
+void connectPorts() {
+    std::string port = "";
+    std::vector<std::tuple< std::string, std::string> > connections;
+    r->getConnections(&connections);
+    for (auto it = connections.begin(); it != connections.end(); it++) {
+        std::string portname0 = std::get<0>(*it);
+        std::string portname1 = std::get<1>(*it);
+        replace(portname0, "@XXCLIENTXX@", jack_get_client_name(client));
+        replace(portname1, "@XXCLIENTXX@", jack_get_client_name(client));
+        jack_connect(client,portname0.c_str(), portname1.c_str());
+    }
+    connections.clear();
+    r->clearConnections();
 }
 
 void startJack() {
@@ -122,30 +147,9 @@ void startJack() {
         }
         r->enableEngine(1);
         r->readConfig();
+        connectPorts();
+        run_process = true;
     }
-}
-
-void replace(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = str.find(from);
-    if(start_pos == std::string::npos)
-    return ;
-    str.replace(start_pos, from.length(), to);
-    return ;
-}
-
-void connectPorts() {
-    std::string port = "";
-    std::vector<std::tuple< std::string, std::string> > connections;
-    r->getConnections(&connections);
-    for (auto it = connections.begin(); it != connections.end(); it++) {
-        std::string portname0 = std::get<0>(*it);
-        std::string portname1 = std::get<1>(*it);
-        replace(portname0, "@XXCLIENTXX@", jack_get_client_name(client));
-        replace(portname1, "@XXCLIENTXX@", jack_get_client_name(client));
-        jack_connect(client,portname0.c_str(), portname1.c_str());
-    }
-    connections.clear();
-    r->clearConnections();
 }
 
 void saveConnections(jack_port_t *port, bool isInput) {
@@ -164,7 +168,8 @@ void saveConnections(jack_port_t *port, bool isInput) {
 }
 
 void quitJack() {
-     if (client) {
+    run_process = false;
+    if (client) {
         if (jack_port_connected(midi_port)) {
             saveConnections(midi_port, true); 
             jack_port_disconnect(client,midi_port);

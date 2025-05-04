@@ -133,7 +133,7 @@ static void file_menu_callback(void *w_, void* user_data) {
 
 void plugin_set_window_size(int *w,int *h,const char * plugin_uri) {
     (*w) = 620; //set initial width of main window
-    (*h) = 580; //set initial height of main window
+    (*h) = 690; //set initial height of main window
 }
 
 const char* plugin_set_name() {
@@ -207,8 +207,58 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     // controller label colour hover
     set_widget_color(ui->widget[25], (Color_state)1, (Color_mod)0, 0.335, 0.315, 0.382, 1.0);
 
+// Compressor
+    ui->elem[5] = create_widget(&ui->main, ui->win, 10, 130, 600, 110);
+    ui->elem[5]->parent_struct = ui;
+    ui->elem[5]->label = "Compressor";
+    // rack mount background colour
+    set_widget_color(ui->elem[5], (Color_state)0, (Color_mod)1, 0.382, 0.382, 0.253,1.0);
+    // rack mount foreground colour 
+    set_widget_color(ui->elem[5], (Color_state)0, (Color_mod)0, 0.078, 0.078, 0.078,0.5);
+    ui->elem[5]->func.expose_callback = draw_eq_window;
+
+    ui->widget[27] = add_eq_button (ui->widget[27], ui->elem[5], 37, "", ui, 25,  20, 30, 30);
+    set_widget_color(ui->widget[27], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    widget_get_png(ui->widget[27], LDVAR(exit__png));
+
+    ui->widget[28] = add_lv2_knob (ui->widget[28], ui->elem[5], 34, "Attack", ui, 315, 15, 60, 80);
+    set_adjustment(ui->widget[28]->adj, 0.01, 0.01, 0.0, 1.0, 0.01, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[28], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
+    // controller background colour
+    set_widget_color(ui->widget[28], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[28], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
+
+    ui->widget[29] = add_lv2_knob (ui->widget[29], ui->elem[5], 35, "Release", ui, 375, 15, 60, 80);
+    set_adjustment(ui->widget[29]->adj, 0.5, 0.5, 0.0, 10.0, 0.1, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[29], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
+    // controller background colour
+    set_widget_color(ui->widget[29], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[29], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
+
+    ui->widget[30] = add_lv2_knob (ui->widget[30], ui->elem[5], 36, "Ratio", ui, 435, 15, 60, 80);
+    set_adjustment(ui->widget[30]->adj, 2.0, 2.0, 1.0, 20.0, 0.5, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[30], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
+    // controller background colour
+    set_widget_color(ui->widget[30], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[30], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
+
+    ui->widget[31] = add_lv2_knob (ui->widget[31], ui->elem[5], 33, "Threshold ", ui, 510, 15, 70, 80);
+    set_adjustment(ui->widget[31]->adj, -20.0, -20.0, -96.0, 10.0, 0.5, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[31], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631, 1.0);
+    // controller background colour
+    set_widget_color(ui->widget[31], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[31], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
+
 // slot A Pedal Profile
-    ui->elem[0] = create_widget(&ui->main, ui->win, 10, 130, 600, 110);
+    ui->elem[0] = create_widget(&ui->main, ui->win, 10, 240, 600, 110);
     ui->elem[0]->parent_struct = ui;
     ui->elem[0]->label = "Pedal Profile";
     ui->elem[0]->data = 1;
@@ -252,7 +302,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[11] = add_lv2_erase_button (ui->widget[11], ui->elem[0], 15, "", ui, 390, 48, 25, 25);
 
 // EQ
-    ui->elem[3] = create_widget(&ui->main, ui->win, 10, 240, 600, 110);
+    ui->elem[3] = create_widget(&ui->main, ui->win, 10, 350, 600, 110);
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
     // rack mount background colour
@@ -320,7 +370,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_widget_color(ui->widget[23], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
 // sloat B Amp Profile
-    ui->elem[1] = create_widget(&ui->main, ui->win, 10, 350, 600, 110);
+    ui->elem[1] = create_widget(&ui->main, ui->win, 10, 460, 600, 110);
     ui->elem[1]->parent_struct = ui;
     ui->elem[1]->label = "Amp Profile";
     ui->elem[1]->data = 2;
@@ -364,7 +414,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[12] = add_lv2_erase_button (ui->widget[12], ui->elem[1], 16, "", ui, 390, 48, 25, 25);
 
 // IR
-    ui->elem[2] = create_widget(&ui->main, ui->win, 10, 460, 600, 110);
+    ui->elem[2] = create_widget(&ui->main, ui->win, 10, 570, 600, 110);
     ui->elem[2]->parent_struct = ui;
     ui->elem[2]->label = "IR Loader";
     // rack mount background colour

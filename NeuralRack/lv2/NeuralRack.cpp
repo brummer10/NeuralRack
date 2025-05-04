@@ -73,6 +73,11 @@ private:
     float*                       _threshold;
     float*                       _eqOnOff;
     float*                       _ngOnOff;
+    float*                       _compOnOff;
+    float*                       _cthreshold;
+    float*                       _attack;
+    float*                       _release;
+    float*                       _ratio;
     uint32_t                     s_rate;
     double                       s_time;
     int                          processCounter;
@@ -167,7 +172,12 @@ Xneuralrack::Xneuralrack() :
     _fVslider5(0),
     _threshold(0),
     _eqOnOff(0),
-    _ngOnOff(0) {
+    _ngOnOff(0),
+    _compOnOff(0),
+    _cthreshold(0),
+    _attack(0),
+    _release(0),
+    _ratio(0) {
         map = nullptr;
         schedule = nullptr;
         control = nullptr;
@@ -299,6 +309,21 @@ void Xneuralrack::connect_(uint32_t port,void* data)
         case 32:
             _ngOnOff = static_cast<float*>(data);
             break;
+        case 33:
+            _cthreshold = static_cast<float*>(data);
+            break;
+        case 34:
+            _attack = static_cast<float*>(data);
+            break;
+        case 35:
+            _release = static_cast<float*>(data);
+            break;
+        case 36:
+            _ratio = static_cast<float*>(data);
+            break;
+        case 37:
+            _compOnOff = static_cast<float*>(data);
+            break;
         default:
             break;
     }
@@ -413,6 +438,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
     engine.bypass = static_cast<uint32_t>(*_bypass);
     engine.eqOnOff = static_cast<uint32_t>(*_eqOnOff);
     engine.ngOnOff = static_cast<uint32_t>(*_ngOnOff);
+    engine.compOnOff = static_cast<uint32_t>(*_compOnOff);
     engine.inputGain = *_inputGain;
     engine.inputGain1 = *_inputGain1;
     engine.outputGain = *_outputGain;
@@ -427,6 +453,10 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
     engine.peq->fVslider4 = *_fVslider4;
     engine.peq->fVslider5 = *_fVslider5;
     engine.ngate->threshold = *_threshold;
+    engine.comp->threshold = *_cthreshold;
+    engine.comp->attack = *_attack;
+    engine.comp->release = *_release;
+    engine.comp->ratio = *_ratio;
 
     // check if a model or IR file is to be removed
     if ((*_eraseSlotA)) {

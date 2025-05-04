@@ -163,14 +163,14 @@ void draw_eq_window(void *w_, void* user_data) {
     widget_set_scale(w);
     cairo_set_font_size (w->crb, w->app->big_font+4);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw-0.5, (42 * w->app->hdpi)-0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw-0.5, (42 * w->app->hdpi)-0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // upper contour of the rack label
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     cairo_stroke (w->crb);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw+0.5, (42 * w->app->hdpi)+0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw+0.5, (42 * w->app->hdpi)+0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // lower contour of the rack label
@@ -179,7 +179,7 @@ void draw_eq_window(void *w_, void* user_data) {
 
     // base colour of the rack label
     shade_bg_color(w, 0.9);
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 42 * w->app->hdpi);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw, 42 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
     widget_reset_scale(w);
 
@@ -210,14 +210,14 @@ void draw_elem(void *w_, void* user_data) {
     widget_set_scale(w);
     cairo_set_font_size (w->crb, w->app->big_font+4);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw-0.5, (34 * w->app->hdpi)-0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw-0.5, (34 * w->app->hdpi)-0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // upper contour of the rack label
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
     cairo_stroke (w->crb);
 
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw+0.5, (34 * w->app->hdpi)+0.5);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw+0.5, (34 * w->app->hdpi)+0.5);
     cairo_text_path(w->crb, w->label);
     cairo_set_line_width(w->crb, 1);
     // lower contour of the rack label
@@ -226,7 +226,7 @@ void draw_elem(void *w_, void* user_data) {
 
     // base colour of the rack label
     shade_bg_color(w, 0.9);
-    cairo_move_to (w->crb, (w->scale.init_width*0.18)-tw, 34 * w->app->hdpi);
+    cairo_move_to (w->crb, (w->scale.init_width*0.19)-tw, 34 * w->app->hdpi);
     cairo_show_text(w->crb, w->label);
 
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
