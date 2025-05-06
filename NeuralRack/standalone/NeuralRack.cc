@@ -363,6 +363,7 @@ public:
                         if (key.compare("[CONTROLS]") == 0) {
                             for (int i = 0; i < CONTROLS; i++) {
                                 adj_set_value(ui->widget[i]->adj, check_stod(value));
+                                if (!buf) break;
                                 buf >> value;
                             }
                         } else if (key.compare("[Model]") == 0) {
@@ -697,6 +698,7 @@ private:
                         if (key.compare("[CONTROLS]") == 0) {
                             for (int i = 0; i < CONTROLS; i++) {
                                 adj_set_value(ui->widget[i]->adj, check_stod(value));
+                                if (!buf) break;
                                 buf >> value;
                             }
                         } else if (key.compare("[Model]") == 0) {

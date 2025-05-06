@@ -177,6 +177,17 @@ private:
                         Drawings
 ****************************************************************/
 
+    static void setFrameColour(Widget_t* w, int x, int y, int wi, int h) {
+        Colors *c = get_color_scheme(w, NORMAL_);
+        cairo_pattern_t *pat = cairo_pattern_create_linear (x, y, x, y + h);
+        cairo_pattern_add_color_stop_rgba
+            (pat, 1, c->bg[0]*1.9, c->bg[1]*1.9, c->bg[2]*1.9,1.0);
+        cairo_pattern_add_color_stop_rgba
+            (pat, 0, c->bg[0]*0.2, c->bg[1]*0.2, c->bg[2]*0.2,1.0);
+        cairo_set_source(w->cr, pat);
+        cairo_pattern_destroy (pat);
+    }
+
     static void draw_window(void *w_, void* user_data) {
         Widget_t *w = (Widget_t*)w_;
         use_bg_color_scheme(w, NORMAL_);
@@ -195,10 +206,11 @@ private:
         use_base_color_scheme(w, NORMAL_);
         cairo_rectangle(w->cr,0,0,width,height);
         cairo_fill_preserve (w->cr);
-        use_text_color_scheme(w, NORMAL_);
+        setFrameColour(w,0,0,width,height);
         cairo_set_line_width(w->cr, 2.0);
         cairo_stroke(w->cr);
 
+        use_text_color_scheme(w, NORMAL_);
         cairo_set_font_size (w->cr, 9.0);
 
         cairo_move_to (w->cr, 2, 9);

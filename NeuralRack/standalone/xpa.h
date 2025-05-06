@@ -106,6 +106,7 @@ public:
         } else if (std::strcmp(it->hostName, "JACK Audio Connection Kit") == 0) {
             #if defined(HAVE_JACK)
             devices.clear();
+            Pa_Terminate();
             return false;
             #endif
         }
