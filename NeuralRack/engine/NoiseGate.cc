@@ -21,6 +21,8 @@ public:
 };
 
 Dsp::Dsp() {
+	threshold = 0.017f; // 0.017f, 0.01f, 0.31f, 0.001f
+    ngate = 0.0;
 }
 
 Dsp::~Dsp() {
@@ -33,8 +35,6 @@ inline void Dsp::clear_state_f()
 inline void Dsp::init(uint32_t sample_rate)
 {
 	fSampleRate = sample_rate;
-	threshold = 0.017f; // 0.017f, 0.01f, 0.31f, 0.001f
-    ngate = 0.0;
 	clear_state_f();
 }
 

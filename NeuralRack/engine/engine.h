@@ -190,9 +190,35 @@ inline Engine::Engine() :
     bufferoutput1(NULL),
     bufferinput0(NULL),
     _bufb(0) {
+        bufsize = 0;
+        buffersize = 0;
+        phaseOffset = 0;
+        bypass = 0;
+        eqOnOff = 0;
+        ngOnOff = 0;
+        normSlotA = 0;
+        normSlotB = 0;
+        inputGain = 0.0;
+        inputGain1 = 0.0;
+        outputGain = 0.0;
+        outputGain1 = 0.0;
+        IRoutputGain = 0.0;
+        IRoutputGain1 = 0.0;
+        buffered = 0.0;
+        latency = 0.0;
+        XrunCounter = 0.0;
+
+        model_file = "None";
+        model_file1 = "None";
+
+        ir_file = "None";
+        ir_file1 = "None";
         xrworker.start();
         pro.start();
         par.start();
+
+        _neuralA.store(false, std::memory_order_release);
+        _neuralB.store(false, std::memory_order_release);
 };
 
 inline Engine::~Engine(){
@@ -225,32 +251,7 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
 
     rt_prio = rt_prio_;
     rt_policy = rt_policy_;
-    bufsize = 0;
-    buffersize = 0;
-    phaseOffset = 0;
-    bypass = 0;
-    eqOnOff = 0;
-    ngOnOff = 0;
-    normSlotA = 0;
-    normSlotB = 0;
-    inputGain = 0.0;
-    inputGain1 = 0.0;
-    outputGain = 0.0;
-    outputGain1 = 0.0;
-    IRoutputGain = 0.0;
-    IRoutputGain1 = 0.0;
-    buffered = 0.0;
-    latency = 0.0;
-    XrunCounter = 0.0;
 
-    model_file = "None";
-    model_file1 = "None";
-
-    ir_file = "None";
-    ir_file1 = "None";
-
-    _neuralA.store(false, std::memory_order_release);
-    _neuralB.store(false, std::memory_order_release);
     _execute.store(false, std::memory_order_release);
     _notify_ui.store(false, std::memory_order_release);
     bufferIsInit.store(false, std::memory_order_release);

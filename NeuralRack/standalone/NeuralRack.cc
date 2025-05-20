@@ -30,6 +30,7 @@
 class NeuralRack : public TextEntry
 {
 public:
+    Widget_t*               TopWin;
 
     NeuralRack() : engine() {
         workToDo.store(false, std::memory_order_release);
@@ -422,7 +423,6 @@ private:
     ParallelThread          fetch;
     X11_UI*                 ui;
     neuralrack::Engine      engine;
-    Widget_t*               TopWin;
     Widget_t*               PresetLoadMenu;
     Widget_t*               ShowValues;
     Widget_t*               AutoConnect;

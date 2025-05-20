@@ -6,10 +6,12 @@
  * Copyright (C) 2024 brummer <brummer@web.de>
  */
 
-#ifndef STANDALONE
-#include "lv2_plugin.cc"
-#else
+#ifdef STANDALONE
 #include "standalone.h"
+#elif defined(CLAPPLUG)
+#include "clapplug.h"
+#else
+#include "lv2_plugin.cc"
 #endif
 
 #ifdef __cplusplus

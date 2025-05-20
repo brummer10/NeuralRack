@@ -1,9 +1,9 @@
 
 include libxputty/Build/Makefile.base
 
-NOGOAL := install all features mod modapp standalone lv2 jack
+NOGOAL := uninstall install all features mod modapp standalone lv2 jack clap
 
-SWITCHGOAL := all modapp standalone lv2 jack
+SWITCHGOAL := all modapp standalone lv2 jack clap
 
 PASS := features 
 
@@ -33,7 +33,7 @@ endif
 	@exec $(MAKE) --no-print-directory -j 1 -C $@ $(MAKECMDGOALS)
 endif
 ifneq (,$(filter $(SWITCHGOAL),$(MAKECMDGOALS)))
-ifeq (,$(wildcard ./libxputty/xputty/resources/texture.png))
+ifeq (,$(wildcard ./libxputty/xputty/resources/NeuralRack.png))
 	@cp ./NeuralRack/resources/*.png ./libxputty/xputty/resources/
 endif
 	@exec $(MAKE) --no-print-directory -j 1 -C $@ all

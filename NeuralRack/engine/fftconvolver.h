@@ -112,6 +112,7 @@ class ConvolverBase
 public:
     virtual bool start(int32_t policy, int32_t priority) {return true;}
     virtual void set_normalisation(uint32_t norm) {}
+    virtual uint32_t get_normalisation() { return 0;}
     virtual bool configure(std::string fname, float gain, unsigned int delay,
                             unsigned int offset, unsigned int length,
                             unsigned int size, unsigned int bufsize) {return false;}
@@ -149,6 +150,8 @@ public:
         return ready;}
 
     void set_normalisation(uint32_t norm) override;
+
+    uint32_t get_normalisation() override { return norm;}
 
     bool configure(std::string fname, float gain, unsigned int delay, unsigned int offset,
                     unsigned int length, unsigned int size, unsigned int bufsize) override;
@@ -212,6 +215,8 @@ public:
 
     void set_normalisation(uint32_t norm) override;
 
+    uint32_t get_normalisation() override { return norm;}
+
     bool configure(std::string fname, float gain, unsigned int delay, unsigned int offset,
                     unsigned int length, unsigned int size, unsigned int bufsize) override;
 
@@ -266,6 +271,10 @@ public:
     void set_normalisation(uint32_t norm) {
             sconv.set_normalisation(norm);
             dconv.set_normalisation(norm);}
+
+    uint32_t get_normalisation() { 
+        return conv->get_normalisation();
+    }
 
     bool configure(std::string fname, float gain, unsigned int delay,
                             unsigned int offset, unsigned int length,

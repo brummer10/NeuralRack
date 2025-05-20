@@ -34,7 +34,12 @@ To build NeuralRack only as standalone application run
 make standalone
 ```
 
-To build NeuralRack with all favours (currently as LV2 plugin and as standalone application) run
+To build NeuralRack only as Clap plugin run
+```shell
+make clap
+```
+
+To build NeuralRack with all favours (currently as LV2 and Clap plugin and as standalone application) run
 ```shell
 make
 ```

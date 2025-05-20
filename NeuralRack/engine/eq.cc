@@ -138,6 +138,12 @@ public:
 
 
 Dsp::Dsp() {
+	fVslider0 = 0.0;
+	fVslider1 = -20.0;
+	fVslider2 = 0.0;
+	fVslider3 = 0.0;
+	fVslider4 = 0.0;
+	fVslider5 = -20.0;
 }
 
 Dsp::~Dsp() {
@@ -261,12 +267,6 @@ inline void Dsp::init(uint32_t sample_rate)
 	fConst63 = 1.0 / (fConst38 / fConst21 + 1.0);
 	fConst64 = 1.0 / (fConst29 * fConst33);
 	flush_to_zero = true;
-	fVslider0 = 0.0;
-	fVslider1 = -20.0;
-	fVslider2 = 0.0;
-	fVslider3 = 0.0;
-	fVslider4 = 0.0;
-	fVslider5 = -20.0;
 	clear_state_f();
 	clear_state_internal();
 }

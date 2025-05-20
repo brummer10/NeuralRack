@@ -10,9 +10,11 @@
 	ifeq ($(user),root)
 	INSTALL_DIR = /usr/lib/lv2
 	EXE_INSTALL_DIR = /usr/bin
+	CLAP_INSTAL_DIR = /usr/lib/clap
 	else 
 	INSTALL_DIR = ~/.lv2
 	EXE_INSTALL_DIR = ~/bin
+	CLAP_INSTAL_DIR = ~/.clap
 	endif
 
 
@@ -153,6 +155,7 @@ endif
 	NAME = NeuralRack
 	space := $(subst ,, )
 	EXEC_NAME := Neuralrack
+	VEXEC_NAME := NeuralRack
 	BUNDLE = $(EXEC_NAME).lv2
 	LIB_DIR := ../libxputty/libxputty/
 	HEADER_DIR := $(LIB_DIR)include/
@@ -191,6 +194,10 @@ endif
 	STANDALONE := $(STANDALONE_DIR)main
 	STANDALONE_UI_SOURCES := $(GUI_DIR)widgets.cc $(GUI_DIR)NeuralRack.c
 
+	CLAP_DIR := ./clap/
+	CLAP_INCLUDE :=  -I./engine/ -I./clap/clap/ -I./clap/
+	CLAP_SOURCES := $(CLAP_DIR)NeuralRackClap.cpp
+
 	LV2_PLUGIN := $(LV2_DIR)$(NAME)
 	LV2_GUI := $(GUI_DIR)$(NAME)
 
@@ -215,6 +222,7 @@ ifeq (,$(filter uninstall,$(MAKECMDGOALS)))
 ifeq (,$(filter mod,$(MAKECMDGOALS)))
 ifeq (,$(filter modapp,$(MAKECMDGOALS)))
 ifeq (,$(filter lv2,$(MAKECMDGOALS)))
+ifeq (,$(filter clap,$(MAKECMDGOALS)))
 	INFOSTRING = with
 	HAVEJACK = $(shell $(PKGCONFIG) $(PKGCONFIG_FLAGS) --cflags  --libs jack 2>/dev/null)
 	ifneq ($(HAVEJACK), )
@@ -235,6 +243,7 @@ ifeq (,$(filter lv2,$(MAKECMDGOALS)))
     else
     $(info $(yellow) INFO: $(reset)Stand-alone   $(red)not supported$(reset))
 	endif
+endif
 endif
 endif
 endif
@@ -294,6 +303,7 @@ ifeq ($(TARGET), Linux)
 else ifeq ($(TARGET), Windows)
 	CXXFLAGS += -D_FORTIFY_SOURCE=2 -I. -fPIC -DPIC -Wall -funroll-loops \
 	-ffast-math -fomit-frame-pointer -fstrength-reduce -Wno-deprecated-declarations \
+	-Wno-maybe-uninitialized -Wno-uninitialized \
 	-Wno-sign-compare -Wno-reorder -Wno-infinite-recursion -DUSE_ATOM $(SSE_CFLAGS) $(FFT_FLAG) \
 	-fdata-sections -I./ -I./zita-resampler-1.1.0 -I$(CONV_DIR) -DNDEBUG \
 	-DRTNEURAL_DEFAULT_ALIGNMENT=32 -DRTNEURAL_USE_EIGEN=1 -DRTNEURAL_NAMESPACE=RTNeural \
@@ -318,10 +328,12 @@ else ifeq ($(TARGET), Windows)
 endif
 
 ifneq ($(MAKECMDGOALS),install)
-  ifneq ($(MAKECMDGOALS),clean)
-    $(info ==================$(yellow) CXXFLAGS $(reset)=====================)
-    $(info $(blue)$(CXXFLAGS)$(reset))
-    $(info ===================$(yellow) BUILD $(reset)=======================)
+  ifneq ($(MAKECMDGOALS),uninstall)
+    ifneq ($(MAKECMDGOALS),clean)
+      $(info ==================$(yellow) CXXFLAGS $(reset)=====================)
+      $(info $(blue)$(CXXFLAGS)$(reset))
+      $(info ===================$(yellow) BUILD $(reset)=======================)
+    endif
   endif
 endif
 
@@ -329,7 +341,7 @@ endif
 
 .NOTPARALLEL:
 
-all: lv2 standalone
+all: lv2 standalone clap
 
 debug: all
 
@@ -353,6 +365,11 @@ ifneq ($(JACKFLAGS), )
 	$(QUIET)cp ./$(EXEC_NAME)$(EXE_EXT) ../bin/
 	@$(B_ECHO) "=================== DONE =======================$(reset)"
 endif
+
+clap: $(NAME).clap
+	$(QUIET)mkdir -p ../bin/
+	$(QUIET)cp ./$(NAME).clap ../bin/
+	@$(B_ECHO) "=================== DONE =======================$(reset)"
 
 -include $(DEPS)
 
@@ -423,6 +440,13 @@ ifeq (,$(filter yes,$(DEBUG)))
 endif
 endif
 
+$(NAME).clap: $(CLAP_SOURCES) $(CLAP_DIR)$(NAME).cc $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(MODEL_LOADER)
+	@$(B_ECHO) "Compiling $(NAME).clap $(reset)"
+	$(QUIET)$(CXX) $(CXXFLAGS) -g $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(CLAP_INCLUDE) $(CLAP_SOURCES)  \
+	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(GUI_LDFLAGS) $(LDFLAGS) -o $(NAME).clap
+ifeq (,$(filter yes,$(DEBUG)))
+	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(NAME).clap
+endif
 
 install :
 ifeq ($(TARGET), Linux)
@@ -450,6 +474,13 @@ ifneq ("$(wildcard ../bin/$(EXEC_NAME)$(EXE_EXT))","")
 else
 	@$(B_ECHO) "$(EXEC_NAME)$(EXE_EXT) standalone skipped$(reset)"
 endif
+ifneq ("$(wildcard ../bin/$(NAME).clap)","")
+	@$(B_ECHO) "Install  $(NAME).clap to $(DESTDIR)$(CLAP_INSTAL_DIR)/$(reset)"
+	$(QUIET)mkdir -p $(DESTDIR)$(CLAP_INSTAL_DIR)/
+	$(QUIET)cp -r ../bin/$(NAME).clap $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME).clap
+else
+	@$(B_ECHO) "$(NAME).clap Clap skipped$(reset)"
+endif
 
 else
 	$(QUIET)$(R_ECHO) "Install is not implemented for windows, please copy the folder $(NAME).lv2 to Program Files/Common Files/LV2$(reset)"
@@ -459,22 +490,19 @@ uninstall :
 ifeq ($(TARGET), Linux)
 	@$(B_ECHO) "Uninstall $(NAME).lv2 $(reset)"
 	$(QUIET)rm -rf $(INSTALL_DIR)/$(BUNDLE)
-	$(QUIET)echo ". ., done"
-
 	$(QUIET)rm -rf $(DESTDIR)$(EXE_INSTALL_DIR)/$(EXEC_NAME)
+	$(QUIET)rm -rf $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME).clap
   ifeq ($(user),root)
 	$(QUIET)rm -rf $(DESTDIR)$(DESKAPPS_DIR)/$(EXEC_NAME).desktop
 	$(QUIET)rm -rf $(DESTDIR)$(PIXMAPS_DIR)/$(EXEC_NAME).svg
   endif
+	@$(B_ECHO) ". ., done$(reset)"
 else
-	$(QUIET)$(R_ECHO) "Uninstall is not implemented for windows, please delete the folder $(NAME).lv2 from Program Files/Common Files/LV2$(reset)"
+	@$(R_ECHO) "Uninstall is not implemented for windows, please delete the folder $(NAME).lv2 from Program Files/Common Files/LV2$(reset)"
 endif
 
 clean:
-ifndef EXTRAQUIET
-	@$(ECHO) ". ., clean up$(reset)"
-endif
-	$(QUIET)rm -f *.a  *.lib *.o *.d *.so *.dll $(EXEC_NAME) $(EXEC_NAME).exe
+	$(QUIET)rm -f *.a  *.lib *.o *.d *.so *.dll $(EXEC_NAME) *.clap $(EXEC_NAME).exe
 	$(QUIET)rm -f $(RESAMP_DIR)*.a $(RESAMP_DIR)*.lib $(RESAMP_DIR)*.o $(RESAMP_DIR)*.d
 	$(QUIET)rm -f $(CONV_DIR)*.a $(CONV_DIR)*.lib $(CONV_DIR)*.o $(CONV_DIR)*.d
 	$(QUIET)rm -f $(NEURALAUDIO_DIR)*.a $(NEURALAUDIO_DIR)*.lib $(NEURALAUDIO_DIR)*.o $(NEURALAUDIO_DIR)*.d
@@ -482,4 +510,7 @@ endif
 	$(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.o $(NEURALAUDIO_DEP_DIR)RTNeural/RTNeural/*.d
 	$(QUIET)rm -f $(ENGINE_DIR)*.a $(ENGINE_DIR)*.lib $(ENGINE_DIR)*.o $(ENGINE_DIR)*.d
 	$(QUIET)rm -rf ../bin
+ifndef EXTRAQUIET
+	@$(B_ECHO) "=================== DONE =======================$(reset)"
+endif
 
