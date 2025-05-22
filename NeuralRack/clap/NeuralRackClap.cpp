@@ -212,7 +212,7 @@ static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_wi
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
     if (!plug->guiIsCreated) {
         #if defined(_WIN32)
-        plug->r->startGui(window->win32);
+        plug->r->startGui((Window)window->win32);
         #else
         plug->r->startGui(window->x11);
         #endif
@@ -220,7 +220,7 @@ static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_wi
     }
     plug->guiIsCreated = true;
     #if defined(_WIN32)
-    plug->r->setParent(window->win32);
+    plug->r->setParent((Window)window->win32);
     #else
     plug->r->setParent(window->x11);
     #endif
