@@ -11,10 +11,12 @@
 	INSTALL_DIR = /usr/lib/lv2
 	EXE_INSTALL_DIR = /usr/bin
 	CLAP_INSTAL_DIR = /usr/lib/clap
+	VST2_INSTAL_DIR = /usr/lib/.vst
 	else 
 	INSTALL_DIR = ~/.lv2
 	EXE_INSTALL_DIR = ~/bin
 	CLAP_INSTAL_DIR = ~/.clap
+	VST2_INSTAL_DIR = ~/.vst
 	endif
 
 
@@ -195,8 +197,12 @@ endif
 	STANDALONE_UI_SOURCES := $(GUI_DIR)widgets.cc $(GUI_DIR)NeuralRack.c
 
 	CLAP_DIR := ./clap/
-	CLAP_INCLUDE :=  -I./engine/ -I./clap/clap/ -I./clap/
+	CLAP_INCLUDE := -I./engine/ -I./clap/clap/ -I./clap/
 	CLAP_SOURCES := $(CLAP_DIR)NeuralRackClap.cpp
+
+	VST2_DIR := ./vst2/
+	VST2_INCLUDE := -I./engine/ -I./clap/ -I./vst2/
+	VST2_SOURCES := $(VST2_DIR)NeuralRackvst.cpp
 
 	LV2_PLUGIN := $(LV2_DIR)$(NAME)
 	LV2_GUI := $(GUI_DIR)$(NAME)
@@ -341,7 +347,7 @@ endif
 
 .NOTPARALLEL:
 
-all: lv2 standalone clap
+all: lv2 standalone clap vst2
 
 debug: all
 
@@ -365,6 +371,11 @@ ifneq ($(JACKFLAGS), )
 	$(QUIET)cp ./$(EXEC_NAME)$(EXE_EXT) ../bin/
 	@$(B_ECHO) "=================== DONE =======================$(reset)"
 endif
+
+vst2: $(NAME)vst.$(LIB_EXT)
+	$(QUIET)mkdir -p ../bin/
+	$(QUIET)cp ./$(NAME)vst.$(LIB_EXT) ../bin/
+	@$(B_ECHO) "=================== DONE =======================$(reset)"
 
 clap: $(NAME).clap
 	$(QUIET)mkdir -p ../bin/
@@ -440,9 +451,17 @@ ifeq (,$(filter yes,$(DEBUG)))
 endif
 endif
 
+$(NAME)vst.$(LIB_EXT): $(VST2_SOURCES) $(CLAP_DIR)$(NAME).cc $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(MODEL_LOADER)
+	@$(B_ECHO) "Compiling $(NAME)vst.$(LIB_EXT) $(reset)"
+	$(QUIET)$(CXX) $(CXXFLAGS) -Wno-multichar $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(VST2_INCLUDE) $(VST2_SOURCES)  \
+	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(GUI_LDFLAGS) $(LDFLAGS) -o $(NAME)vst.$(LIB_EXT)
+ifeq (,$(filter yes,$(DEBUG)))
+	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(NAME)vst.$(LIB_EXT)
+endif
+
 $(NAME).clap: $(CLAP_SOURCES) $(CLAP_DIR)$(NAME).cc $(NEURALAUDIO_LIB) $(CONV_LIB) $(RESAMP_LIB) $(MODEL_LOADER)
 	@$(B_ECHO) "Compiling $(NAME).clap $(reset)"
-	$(QUIET)$(CXX) $(CXXFLAGS) -g $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(CLAP_INCLUDE) $(CLAP_SOURCES)  \
+	$(QUIET)$(CXX) $(CXXFLAGS) $(NEURALAUDIO_INCLUDES) $(ENGINE_INCLUDE) $(MODEL_LOADER) $(CLAP_INCLUDE) $(CLAP_SOURCES)  \
 	-L. $(NEURALAUDIO_LIB) -L. $(CONV_LIB) -L. $(RESAMP_LIB) $(GUI_LDFLAGS) $(LDFLAGS) -o $(NAME).clap
 ifeq (,$(filter yes,$(DEBUG)))
 	$(QUIET)$(STRIP) -s -x -X -R .comment -R .note.ABI-tag $(NAME).clap
@@ -480,6 +499,13 @@ ifneq ("$(wildcard ../bin/$(NAME).clap)","")
 	$(QUIET)cp -r ../bin/$(NAME).clap $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME).clap
 else
 	@$(B_ECHO) "$(NAME).clap Clap skipped$(reset)"
+endif
+ifneq ("$(wildcard ../bin/$(NAME)vst.$(LIB_EXT))","")
+	@$(B_ECHO) "Install  $(NAME)vst.$(LIB_EXT) to $(DESTDIR)$(VST2_INSTAL_DIR)/$(reset)"
+	$(QUIET)mkdir -p $(DESTDIR)$(VST2_INSTAL_DIR)/
+	$(QUIET)cp -r ../bin/$(NAME)vst.$(LIB_EXT) $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME)vst.$(LIB_EXT)
+else
+	@$(B_ECHO) "$(NAME)vst.$(LIB_EXT) vst2 skipped$(reset)"
 endif
 
 else

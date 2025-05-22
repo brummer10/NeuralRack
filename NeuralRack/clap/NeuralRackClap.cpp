@@ -211,11 +211,19 @@ static bool neuralrack_gui_hide(const clap_plugin *plugin) {
 static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_window_t *window) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
     if (!plug->guiIsCreated) {
-        plug->r->startGui(window);
+        #if defined(_WIN32)
+        plug->r->startGui(window->win32);
+        #else
+        plug->r->startGui(window->x11);
+        #endif
         plug->r->enableEngine(1);
     }
     plug->guiIsCreated = true;
-    plug->r->setParent(window);
+    #if defined(_WIN32)
+    plug->r->setParent(window->win32);
+    #else
+    plug->r->setParent(window->x11);
+    #endif
     plug->r->showGui();
     return true;
 }

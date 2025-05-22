@@ -53,16 +53,16 @@ public:
         //cleanup();
     }
 
-    void startGui(const clap_window_t *window) {
+    void startGui(Window window) {
         main_init(&ui->main);
         set_custom_theme(ui);
         int w = 1;
         int h = 1;
         plugin_set_window_size(&w,&h,"clap_plugin");
         #if defined(_WIN32)
-        TopWin  = create_window(&ui->main, (Window) window->win32, 0, 0, w, h);
+        TopWin  = create_window(&ui->main, (HWND) window, 0, 0, w, h);
         #else
-        TopWin  = create_window(&ui->main, (Window) window->x11, 0, 0, w, h);
+        TopWin  = create_window(&ui->main, (Window) window, 0, 0, w, h);
         #endif
         TopWin->flags |= HIDE_ON_DELETE;
         ui->win = create_widget(&ui->main, TopWin, 0, 0, w, h);
@@ -97,11 +97,11 @@ public:
         widget_show_all(TopWin);
     }
     
-    void setParent(const clap_window_t *window) {
+    void setParent(Window window) {
         #if defined(_WIN32)
-        SetParent(TopWin->widget, (HWND) (window)->win32);
+        SetParent(TopWin->widget, (HWND) window);
         #else
-        XReparentWindow(ui->main.dpy, TopWin->widget, (Window) window->x11, 0, 0);
+        XReparentWindow(ui->main.dpy, TopWin->widget, (Window) window, 0, 0);
         #endif
     }
 
@@ -428,11 +428,11 @@ public:
                 buf >> value;
                 engine.peq->fVslider5 = check_stod(value);
                 buf >> value;
-                engine.eqOnOff = check_stod(value);
+                engine.eqOnOff = static_cast<uint32_t>(check_stod(value));
                 buf >> value;
                 engine.ngate->threshold = check_stod(value);
                 buf >> value;
-                engine.ngOnOff = check_stod(value);
+                engine.ngOnOff = static_cast<uint32_t>(check_stod(value));
             } else if (key.compare("[Model]") == 0) {
                 engine.model_file = remove_sub(line, "[Model] ");
                 engine._ab.fetch_add(1, std::memory_order_relaxed);
