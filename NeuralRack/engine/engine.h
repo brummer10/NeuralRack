@@ -515,7 +515,6 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     _bufb = bufb;
     if (!_execute.load(std::memory_order_acquire) && conv1.is_runnable()) {
         if (pro.getProcess()) {
-            pro.setProcessor(1);
             pro.runProcess();
         } else {
             XrunCounter += 1;
