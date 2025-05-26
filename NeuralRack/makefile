@@ -11,7 +11,7 @@
 	INSTALL_DIR = /usr/lib/lv2
 	EXE_INSTALL_DIR = /usr/bin
 	CLAP_INSTAL_DIR = /usr/lib/clap
-	VST2_INSTAL_DIR = /usr/lib/.vst
+	VST2_INSTAL_DIR = /usr/lib/vst
 	else 
 	INSTALL_DIR = ~/.lv2
 	EXE_INSTALL_DIR = ~/bin
@@ -503,7 +503,7 @@ endif
 ifneq ("$(wildcard ../bin/$(NAME)vst.$(LIB_EXT))","")
 	@$(B_ECHO) "Install  $(NAME)vst.$(LIB_EXT) to $(DESTDIR)$(VST2_INSTAL_DIR)/$(reset)"
 	$(QUIET)mkdir -p $(DESTDIR)$(VST2_INSTAL_DIR)/
-	$(QUIET)cp -r ../bin/$(NAME)vst.$(LIB_EXT) $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME)vst.$(LIB_EXT)
+	$(QUIET)cp -r ../bin/$(NAME)vst.$(LIB_EXT) $(DESTDIR)$(VST2_INSTAL_DIR)/$(NAME)vst.$(LIB_EXT)
 else
 	@$(B_ECHO) "$(NAME)vst.$(LIB_EXT) vst2 skipped$(reset)"
 endif
