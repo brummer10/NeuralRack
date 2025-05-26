@@ -11,7 +11,7 @@
 	INSTALL_DIR = /usr/lib/lv2
 	EXE_INSTALL_DIR = /usr/bin
 	CLAP_INSTAL_DIR = /usr/lib/clap
-	VST2_INSTAL_DIR = /usr/lib/.vst
+	VST2_INSTAL_DIR = /usr/lib/vst
 	else 
 	INSTALL_DIR = ~/.lv2
 	EXE_INSTALL_DIR = ~/bin
