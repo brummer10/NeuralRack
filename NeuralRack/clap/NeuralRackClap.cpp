@@ -33,6 +33,8 @@ typedef struct {
     NeuralRack *r;
     bool guiIsCreated;
     uint32_t latency;
+    uint32_t width;
+    uint32_t height;
 } neuralrack_plugin_t;
 
 
@@ -149,13 +151,14 @@ static bool neuralrack_gui_set_scale(const clap_plugin_t *plugin, double scale) 
 }
 
 static bool neuralrack_gui_get_size(const clap_plugin_t *plugin, uint32_t *width, uint32_t *height) {
-    *width = WINDOW_WIDTH;
-    *height = WINDOW_HEIGHT;
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    *width = plug->r->TopWin->width;
+    *height = plug->r->TopWin->height;
     return true;
 }
 
 static bool neuralrack_gui_can_resize(const clap_plugin_t *plugin) {
-    return false;
+    return true;
 }
 
 static bool neuralrack_gui_get_resize_hints(const clap_plugin_t *plugin, clap_gui_resize_hints_t *hints) {
@@ -163,8 +166,9 @@ static bool neuralrack_gui_get_resize_hints(const clap_plugin_t *plugin, clap_gu
 }
 
 static bool neuralrack_gui_adjust_size(const clap_plugin_t *plugin, uint32_t *width, uint32_t *height) {
-    *width = WINDOW_WIDTH;
-    *height = WINDOW_HEIGHT;
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    plug->width = *width;
+    plug->height = *height;
     return true;   
 }
 
@@ -224,7 +228,7 @@ static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_wi
     #else
     plug->r->setParent(window->x11);
     #endif
-    plug->r->showGui();
+    //plug->r->showGui();
     return true;
 }
 
@@ -233,6 +237,7 @@ static bool neuralrack_gui_set_size(const clap_plugin_t *plugin, uint32_t width,
     os_resize_window(plug->r->getMain()->dpy, plug->r->TopWin, width, height);
     return true;
 }
+
 
 // Main thread callback (we run our own main thread)
 static void neuralrack_on_main_thread(const clap_plugin_t *plugin) {
@@ -348,6 +353,8 @@ static const clap_plugin_t *neuralrack_create(const clap_host_t *host) {
     if (!plug) return NULL;
     plug->r = new NeuralRack();
     plug->guiIsCreated = false;
+    plug->width = WINDOW_WIDTH;
+    plug->height = WINDOW_HEIGHT;
     plug->plugin.desc = &neuralrack_descriptor;
     plug->plugin.plugin_data = plug;
     plug->plugin.init = neuralrack_init;

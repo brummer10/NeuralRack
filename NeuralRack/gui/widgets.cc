@@ -633,6 +633,7 @@ Widget_t* add_lv2_knob(Widget_t *w, Widget_t *p, int index, const char * label,
     w = add_knob(p, label, x, y, width, height);
     w->parent_struct = ui;
     w->data = index;
+    w->scale.gravity = CENTER;
     w->func.expose_callback = draw_my_knob;
     w->func.value_changed_callback = value_changed;
     return w;
