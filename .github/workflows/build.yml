@@ -98,6 +98,25 @@ jobs:
           lto: false
           pawpaw: true
 
+  linux-vst2:
+    strategy:
+      matrix:
+        target: [linux-x86_64]
+    runs-on: ubuntu-22.04
+    permissions:
+        contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions
+        with:
+          target: ${{ matrix.target }}
+          postfix: -vst2
+          extraargs: vst2
+          lto: false
+          pawpaw: true
+
   windows-optimised:
     strategy:
       matrix:
@@ -167,6 +186,24 @@ jobs:
           target: ${{ matrix.target }}
           postfix: -clap
           extraargs: clap
+          pawpaw: true
+
+  windows-vst2:
+    strategy:
+      matrix:
+        target: [win64]
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions
+        with:
+          target: ${{ matrix.target }}
+          postfix: -vst2
+          extraargs: vst2
           pawpaw: true
 
   source:

@@ -39,7 +39,12 @@ To build NeuralRack only as Clap plugin run
 make clap
 ```
 
-To build NeuralRack with all favours (currently as LV2 and Clap plugin and as standalone application) run
+To build NeuralRack only as vst2 plugin run
+```shell
+make vst2
+```
+
+To build NeuralRack with all favours (currently as LV2, Clap and vst2 plugin and as standalone application) run
 ```shell
 make
 ```
