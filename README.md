@@ -65,7 +65,7 @@ make
 
 ```shell
 git clone https://github.com/brummer10//NeuralRack.git
-cd NeuralRack.lv2
+cd NeuralRack
 git submodule update --init --recursive
 make lv2
 make install # will install into ~/.lv2 ... AND/OR....
