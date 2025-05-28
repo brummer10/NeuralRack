@@ -229,6 +229,7 @@ ifeq (,$(filter mod,$(MAKECMDGOALS)))
 ifeq (,$(filter modapp,$(MAKECMDGOALS)))
 ifeq (,$(filter lv2,$(MAKECMDGOALS)))
 ifeq (,$(filter clap,$(MAKECMDGOALS)))
+ifeq (,$(filter vst2,$(MAKECMDGOALS)))
 	INFOSTRING = with
 	HAVEJACK = $(shell $(PKGCONFIG) $(PKGCONFIG_FLAGS) --cflags  --libs jack 2>/dev/null)
 	ifneq ($(HAVEJACK), )
@@ -249,6 +250,7 @@ ifeq (,$(filter clap,$(MAKECMDGOALS)))
     else
     $(info $(yellow) INFO: $(reset)Stand-alone   $(red)not supported$(reset))
 	endif
+endif
 endif
 endif
 endif

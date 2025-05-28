@@ -42,6 +42,8 @@ public:
         ui->uiSampleRate = 0;
         ui->f_index = 0;
         title = "NeuralRack";
+        firstLoop = true;
+        p = 0;
         for(int i = 0;i<CONTROLS;i++)
             ui->widget[i] = NULL;
     }
@@ -95,6 +97,7 @@ public:
         engine._notify_ui.store(true, std::memory_order_release);
         getEngineValues();
         widget_show_all(TopWin);
+        firstLoop = true;
     }
     
     void setParent(Window window) {
@@ -103,10 +106,37 @@ public:
         #else
         XReparentWindow(ui->main.dpy, TopWin->widget, (Window) window, 0, 0);
         #endif
+        p = window;
+    }
+
+    void checkParentWindowSize(int width, int height) {
+        #if defined (IS_VST2)
+        if (!p) return;
+        int host_width = 1;
+        int host_height = 1;
+        #if defined(_WIN32)
+        RECT rect;
+        if (GetClientRect((HWND) p, &rect)) {
+            host_width  = rect.right - rect.left;
+            host_height = rect.bottom - rect.top;
+        }
+        #else
+        XWindowAttributes attrs;
+        if (XGetWindowAttributes(ui->main.dpy, p, &attrs)) {
+            host_width  = attrs.width;
+            host_height = attrs.height;
+        }
+        #endif
+        if ((host_width != width && host_width != 1) ||
+            (host_height != height && host_height != 1)) {
+            os_resize_window(ui->main.dpy, TopWin, host_width, host_height);
+        }
+        #endif
     }
 
     void hideGui() {
         widget_hide(TopWin);
+        firstLoop = false;
     }
 
     void quitGui() {
@@ -115,6 +145,10 @@ public:
 
     void runGui() {
         checkEngine();
+        if (firstLoop) {
+            checkParentWindowSize(TopWin->width, TopWin->height);
+            firstLoop = false;
+        }
         run_embedded(&ui->main);
     }
 
@@ -504,9 +538,11 @@ private:
     ParallelThread          fetch;
     X11_UI*                 ui;
     neuralrack::Engine      engine;
+    Window                  p;
     std::atomic<bool>       workToDo;
     double                  s_time;
     std::string             title;
+    bool                    firstLoop;
 
     // rebuild file menu when needed
     void rebuild_file_menu(ModelPicker *m) {
