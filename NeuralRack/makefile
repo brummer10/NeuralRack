@@ -220,7 +220,7 @@ endif
 
 	GUIIMPL_SOURCE := $(LV2_DIR)lv2_plugin.cc $(GUI_DIR)widgets.cc
 
-	DEPS = $NEURAL_OBJ:%.o=%.d) $(CONV_OBJ:%.o=%.d) $(RESAMP_OBJ:%.o=%.d) Neuralrack.d
+	DEPS = $NEURAL_OBJ:%.o=%.d) $(CONV_OBJ:%.o=%.d) $(RESAMP_OBJ:%.o=%.d) Neuralrack.d NeuralRackvst.d
 
 ifeq (,$(filter clean,$(MAKECMDGOALS)))
 ifeq (,$(filter install,$(MAKECMDGOALS)))

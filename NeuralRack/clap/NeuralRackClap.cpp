@@ -7,10 +7,15 @@
  */
 
 #include <clap.h>
+#include <ext/params.h>
+#include <events.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "NeuralRack.cc"
+
+typedef struct neuralrack_plugin_t neuralrack_plugin_t;
+
+#include "NeuralRackParameter.h"
 
 #define WINDOW_WIDTH  620
 #define WINDOW_HEIGHT 580
@@ -26,46 +31,131 @@
  ** neuralrack_plugin_t -> the plugin struct
  */
 
+#include "NeuralRack.cc"
+
 // Plugin data structure
-typedef struct {
+struct neuralrack_plugin_t {
     clap_plugin_t plugin;
     const clap_host_t *host;
     NeuralRack *r;
+    NeuralRackParams params;
     bool guiIsCreated;
     uint32_t latency;
     uint32_t width;
     uint32_t height;
-} neuralrack_plugin_t;
-
+};
 
 /****************************************************************
- ** connect value change messages from the GUI to the engine
+ ** Parameter handling
  */
 
-// send value changes from GUI to the engine
-void sendValueChanged(X11_UI *ui, int port, float value) {
-    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
-    r->sendValueChanged(port, value);
+#include "NeuralRackParameter.cc"
+
+static uint32_t params_count(const clap_plugin_t*) {
+    return (uint32_t)neuralrack_parameters.size();
 }
 
-// send a file name from GUI to the engine
-void sendFileName(X11_UI *ui, ModelPicker* m, int old){
-    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
-    r->sendFileName(m, old);
+static bool params_get_info(const clap_plugin_t*, uint32_t param_index, clap_param_info_t* param_info) {
+    if (param_index >= neuralrack_parameters.size()) return false;
+    const auto& def = neuralrack_parameters[param_index];
+    memset(param_info, 0, sizeof(*param_info));
+    param_info->id = def.id;
+    strncpy(param_info->name, def.name.c_str(), CLAP_NAME_SIZE-1);
+    strncpy(param_info->module, def.module.c_str(), CLAP_PATH_SIZE-1);
+    param_info->default_value = def.def;
+    param_info->min_value = def.min;
+    param_info->max_value = def.max;
+    param_info->flags = def.flags;
+    param_info->cookie = nullptr;
+    return true;
 }
 
+static bool params_get_value(const clap_plugin_t* plugin, clap_id param_id, double* value) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
+    *value = plug->params.getParam(plug, param_id);
+    return true;
+}
+
+static bool params_value_to_text(const clap_plugin_t*, clap_id param_id, double value, char* out, uint32_t size) {
+    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
+    snprintf(out, size, "%.2f", value);
+    return true;
+}
+
+static bool params_text_to_value(const clap_plugin_t*, clap_id param_id, const char* text, double* out_value) {
+    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
+    *out_value = atof(text);
+    return true;
+}
+
+static void sync_params_to_plug(const clap_plugin_t *plugin, const clap_event_header_t *hdr) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (hdr->space_id == CLAP_CORE_EVENT_SPACE_ID) {
+        switch (hdr->type) {
+            case CLAP_EVENT_PARAM_VALUE: {
+                const clap_event_param_value_t *ev = (const clap_event_param_value_t *)hdr;
+                plug->params.setParam(plug, ev->param_id, ev->value);
+                break;
+            }
+        }
+    }
+}
+
+static void sync_params_to_host(const clap_plugin_t *plugin, const clap_output_events_t *out) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    for (uint32_t i = 0; i < PARAM_COUNT; i++) {
+        clap_event_param_value_t event = {};
+        event.header.size = sizeof(event);
+        event.header.time = 0;
+        event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+        event.header.type = CLAP_EVENT_PARAM_VALUE;
+        event.header.flags = 0;
+        event.param_id = i;
+        event.cookie = NULL;
+        event.note_id = -1;
+        event.port_index = -1;
+        event.channel = -1;
+        event.key = -1;
+        event.value = plug->params.getParam(plug, i);;
+        out->try_push(out, &event.header);
+    }
+}
+
+static void params_flush(const clap_plugin_t *plugin,
+                        const clap_input_events_t *in,
+                        const clap_output_events_t *out) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    for (uint32_t i = 0; i < in->size(in); ++i) {
+        const clap_event_header_t *ev = in->get(in, i);
+        if (ev->type == CLAP_EVENT_PARAM_VALUE) {
+            auto *p = (const clap_event_param_value_t *)ev;
+            if (p->param_id >= 0 && p->param_id < PARAM_COUNT) {
+                plug->params.setParam(plug, p->param_id, p->value);
+            }
+        }
+    }
+}
+
+const clap_plugin_params_t neuralrack_params = {
+    .count         = params_count,
+    .get_info      = params_get_info,
+    .get_value     = params_get_value,
+    .value_to_text = params_value_to_text,
+    .text_to_value = params_text_to_value,
+    .flush         = params_flush,
+};
 
 /****************************************************************
  ** define the audio ports
  */
 
-// Audio Ports
-static uint32_t audio_ports_count(const clap_plugin_t *plugin, bool is_input) {
+static uint32_t audio_ports_count(const clap_plugin_t*, bool is_input) {
     if (is_input) return 1; // 1 input
     else return 2; // and 2 output
 }
 
-static bool audio_ports_get(const clap_plugin_t *plugin, uint32_t index, bool is_input, clap_audio_port_info_t *info) {
+static bool audio_ports_get(const clap_plugin_t*, uint32_t index, bool is_input, clap_audio_port_info_t *info) {
     if (index > 0) return false;
     info->id = index;
     snprintf(info->name, sizeof(info->name), "%s", is_input ? "Input" : "Output");
@@ -89,7 +179,6 @@ static const clap_plugin_audio_ports_t audio_ports = {
  ** Latency reporting
  */
 
-// Latency
 static uint32_t neuralrack_latency_get(const clap_plugin_t *plugin) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
     plug->r->getLatency(&plug->latency);
@@ -133,7 +222,6 @@ static const clap_plugin_state_t state_extension = {
  ** GUI handling
  */
 
-// GUI Callbacks
 static bool neuralrack_gui_is_api_supported(const clap_plugin *plugin, const char *api, bool is_floating) {
     return strcmp(api, GUIAPI) == 0;
 }
@@ -294,6 +382,33 @@ static clap_process_status neuralrack_process(const clap_plugin_t *plugin, const
     float *left_output = process->audio_outputs[0].data32[0]; // Left channel of stereo output
     float *right_output = process->audio_outputs[0].data32[1]; // Right channel of stereo output
     uint32_t nframes = process->frames_count;
+    const uint32_t nev = process->in_events->size(process->in_events);
+    uint32_t ev_index = 0;
+    uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
+
+    if (plug->r->controllerChanged.load(std::memory_order_acquire)) {
+        sync_params_to_host(plugin, process->out_events);
+        plug->r->controllerChanged.store(false, std::memory_order_release);
+    }
+
+    for (uint32_t i = 0; i < nframes;++i) {
+        while (ev_index < nev && next_ev_frame == i) {
+            const clap_event_header_t *hdr = process->in_events->get(process->in_events, ev_index);
+            if (hdr->time != i) {
+                next_ev_frame = hdr->time;
+                break;
+            }
+            sync_params_to_plug(plugin, hdr);
+            ++ev_index;
+
+            if (ev_index == nev) {
+                // we reached the end of the event list
+                next_ev_frame = nframes;
+                break;
+            }
+        }
+    }
+
     // in-place processing
     if(left_output != input)
         memcpy(left_output, input, nframes*sizeof(float));
@@ -303,7 +418,6 @@ static clap_process_status neuralrack_process(const clap_plugin_t *plugin, const
     plug->r->process(nframes, left_output, right_output);
     return CLAP_PROCESS_CONTINUE;
 }
-
 
 // Finally get the sample rate and re-init the engine
 static bool neuralrack_activate(const struct clap_plugin *plugin,
@@ -343,6 +457,7 @@ static const void *neuralrack_get_extension(const clap_plugin_t *plugin, const c
     if (!strcmp(id, CLAP_EXT_AUDIO_PORTS)) return &audio_ports;
     if (!strcmp(id, CLAP_EXT_LATENCY)) return &latency_extension;
     if (!strcmp(id, CLAP_EXT_GUI)) return &extensionGUI;
+    if (!strcmp(id, CLAP_EXT_PARAMS)) return &neuralrack_params;
     if (!strcmp(id, CLAP_EXT_STATE)) return &state_extension;
     return NULL;
 }
@@ -370,7 +485,6 @@ static const clap_plugin_t *neuralrack_create(const clap_host_t *host) {
     plug->host = host;
     return &plug->plugin;
 }
-
 
 /****************************************************************
  ** the factory entry

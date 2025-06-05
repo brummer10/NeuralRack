@@ -42,23 +42,8 @@ struct neuralrack_plugin_t {
     int width, height;
     float SampleRate;
     std::string state;
+    bool isInited;
 };
-
-/****************************************************************
- ** connect value change messages from the GUI to the engine
- */
-
-// send value changes from GUI to the engine
-void sendValueChanged(X11_UI *ui, int port, float value) {
-    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
-    r->sendValueChanged(port, value);
-}
-
-// send a file name from GUI to the engine
-void sendFileName(X11_UI *ui, ModelPicker* m, int old){
-    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
-    r->sendFileName(m, old);
-}
 
 /****************************************************************
  ** Parameter handling not used here
@@ -145,6 +130,7 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
         case effSetSampleRate:
             plug->SampleRate = opt;
             plug->r->initEngine((uint32_t)plug->SampleRate, 25, 1);
+            plug->isInited = true;
             loadState(plug, 0, 0);
             break;
         case effEditOpen: {
@@ -171,7 +157,8 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
         //case effSetProgram:
         case 24: { // effSetChunk
             plug->state = (const char*) ptr;
-            // read state, but load it after we got the sample rate
+            // read state, but load it only after we got the sample rate
+            if (plug->isInited) loadState(plug, 0, 0);
             break;
         }
         default: break;
@@ -194,6 +181,7 @@ AEffect* VSTPluginMain(audioMasterCallback audioMaster) {
     plug->height = WINDOW_HEIGHT;
     plug->editorRect = {0, 0, (short) plug->height, (short) plug->width};
     plug->SampleRate = 48000.0;
+    plug->isInited = false;
 
     effect->magic = kEffectMagic;
     effect->dispatcher = dispatcher;

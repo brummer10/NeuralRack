@@ -7,6 +7,7 @@
  */
 
 
+#include <atomic>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
@@ -29,6 +30,8 @@ class NeuralRack
 {
 public:
     Widget_t*               TopWin;
+    std::atomic<bool>       paramChanged;
+    std::atomic<bool>       controllerChanged;
 
     NeuralRack() : engine() {
         workToDo.store(false, std::memory_order_release);
@@ -44,6 +47,8 @@ public:
         title = "NeuralRack";
         firstLoop = true;
         p = 0;
+        paramChanged.store(false, std::memory_order_release);
+        controllerChanged.store(false, std::memory_order_release);
         for(int i = 0;i<CONTROLS;i++)
             ui->widget[i] = NULL;
     }
@@ -149,6 +154,10 @@ public:
             checkParentWindowSize(TopWin->width, TopWin->height);
             firstLoop = false;
         }
+        if (paramChanged.load(std::memory_order_acquire)) {
+            getEngineValues();
+            paramChanged.store(false, std::memory_order_release);
+        }
         run_embedded(&ui->main);
     }
 
@@ -178,6 +187,10 @@ public:
 
     Xputty *getMain() {
         return &ui->main;
+    }
+
+    neuralrack::Engine *getEngine() {
+        return &engine;
     }
 
     void initEQ() {
@@ -349,6 +362,8 @@ public:
             default:
             break;
         }
+        // inform the process thread that a controller value was changed by the GUI thread
+        controllerChanged.store(true, std::memory_order_release);
     }
 
     // send a file name from GUI to the engine
@@ -590,3 +605,21 @@ private:
     }
 
 };
+
+
+/****************************************************************
+ ** connect value change messages from the GUI (C) to the engine (C++)
+ */
+
+// send value changes from GUI to the engine
+void sendValueChanged(X11_UI *ui, int port, float value) {
+    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
+    r->sendValueChanged(port, value);
+}
+
+// send a file name from GUI to the engine
+void sendFileName(X11_UI *ui, ModelPicker* m, int old){
+    NeuralRack *r = (NeuralRack*)ui->win->private_struct;
+    r->sendFileName(m, old);
+}
+

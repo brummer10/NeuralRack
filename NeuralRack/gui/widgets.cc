@@ -492,9 +492,13 @@ void setKnobFrame(Widget_t* w, int x, int y, int wi, int h) {
     Colors *c = get_color_scheme(w, NORMAL_);
     cairo_pattern_t *pat = cairo_pattern_create_linear (x, y, x, y + h);
     cairo_pattern_add_color_stop_rgba
-        (pat, 0, c->bg[0]*3.5, c->bg[1]*3.5, c->bg[2]*3.5,1.0);
+        (pat, 0, c->bg[0]*4.5, c->bg[1]*4.5, c->bg[2]*4.5,1.0);
     cairo_pattern_add_color_stop_rgba
-        (pat, 0.2, c->bg[0]*2.0, c->bg[1]*2.0, c->bg[2]*2.0,1.0);
+        (pat, 0.2, c->bg[0]*3.0, c->bg[1]*3.0, c->bg[2]*4.0,1.0);
+    cairo_pattern_add_color_stop_rgba
+        (pat, 0.3, c->bg[0]*2.0, c->bg[1]*2.0, c->bg[2]*2.0,1.0);
+    cairo_pattern_add_color_stop_rgba 
+        (pat, 0.6, c->bg[0]*0.1, c->bg[1]*0.1, c->bg[2]*0.1,1.0);
     cairo_pattern_add_color_stop_rgba 
         (pat, 1, c->bg[0]*0.1, c->bg[1]*0.1, c->bg[2]*0.1,1.0);
     cairo_set_source(w->crb, pat);
@@ -538,19 +542,33 @@ static void draw_my_knob(void *w_, void* user_data) {
         draw_image_knob(w, width, height);
     } else {
 
-        cairo_arc(w->crb,knobx1, knoby1, knob_x/2.4, 0, 2 * M_PI );
+       float body = knob_x/2.4;
+        cairo_arc(w->crb,knobx1, knoby1, body, 0, 2 * M_PI );
+
+        cairo_pattern_t *pat = cairo_pattern_create_linear(
+            knobx1, knoby1 - body, knobx1, knoby1 + body
+        );
+        cairo_pattern_add_color_stop_rgb(pat, 0.00, 0.33, 0.33, 0.33);
+        cairo_pattern_add_color_stop_rgb(pat, 0.1, 0.20, 0.20, 0.20);
+        cairo_pattern_add_color_stop_rgb(pat, 0.30, 0.09, 0.09, 0.09);
+        cairo_pattern_add_color_stop_rgb(pat, 0.65, 0.03, 0.03, 0.03);
+        cairo_pattern_add_color_stop_rgb(pat, 1.00, 0.01, 0.01, 0.01);
+        cairo_set_source(w->crb, pat);
+        cairo_fill_preserve(w->crb);
+        cairo_pattern_destroy(pat);
+
         cairo_set_source_rgba(w->crb, 0.033, 0.033, 0.033, 1);
-        cairo_fill_preserve (w->crb);
-        setKnobFrame(w,0, 0, width, height);
-        cairo_stroke_preserve (w->crb);
+        //cairo_fill_preserve (w->crb);
+        //setKnobFrame(w,0, 0, width, height);
+        cairo_stroke (w->crb);
         cairo_new_path (w->crb);
 
         cairo_arc(w->crb,knobx1, knoby1, knob_x/3.1, 0, 2 * M_PI );
         cairo_set_source_rgba(w->crb, 0.093, 0.093, 0.093, 1);
         cairo_fill_preserve (w->crb);
         setKnobFrame(w,0, 0, width, height);
-        cairo_set_line_width(w->crb,3);
-        cairo_stroke_preserve (w->crb);
+        cairo_set_line_width(w->crb,2);
+        cairo_stroke (w->crb);
         cairo_new_path (w->crb);
 
         /** create a rotating pointer on the kob**/
@@ -763,6 +781,19 @@ void draw_image_button(Widget_t *w, int width_t, int height_t, float offset) {
     cairo_scale(w->crb, x1,y1);
 }
 
+void setButtonFrame(Widget_t* w, int x, int y, int wi, int h) {
+    Colors *c = get_color_scheme(w, NORMAL_);
+    cairo_pattern_t *pat = cairo_pattern_create_linear (x, y, x, y + h);
+    cairo_pattern_add_color_stop_rgba
+        (pat, 0, c->bg[0]*3.5, c->bg[1]*3.5, c->bg[2]*3.5,1.0);
+    cairo_pattern_add_color_stop_rgba
+        (pat, 0.2, c->bg[0]*2.0, c->bg[1]*2.0, c->bg[2]*2.0,1.0);
+    cairo_pattern_add_color_stop_rgba 
+        (pat, 1, c->bg[0]*0.1, c->bg[1]*0.1, c->bg[2]*0.1,1.0);
+    cairo_set_source(w->crb, pat);
+    cairo_pattern_destroy (pat);
+}
+
 void draw_button(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
     if (!w) return;
@@ -785,7 +816,7 @@ void draw_button(void *w_, void* user_data) {
     cairo_fill_preserve (w->crb);
 
     if(w->state == 0 && !state) { // passive -> Off
-        setKnobFrame(w,  2, 2, width, height);
+        setButtonFrame(w,  2, 2, width, height);
         cairo_set_line_width(w->crb, 1.0);
     } else if(w->state==1) { // hover
         if (!state) setKnobFrame(w,  1, 1, width-2, height-2);
