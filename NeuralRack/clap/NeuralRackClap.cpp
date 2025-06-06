@@ -274,6 +274,7 @@ static bool neuralrack_gui_create(const clap_plugin *plugin, const char *api, bo
         if (!plug->guiIsCreated) {
             plug->r->startGui();
             plug->r->enableEngine(1);
+            fprintf(stderr, "createGui\n");
         }
         plug->guiIsCreated = true;
         return true;
@@ -283,6 +284,7 @@ static bool neuralrack_gui_create(const clap_plugin *plugin, const char *api, bo
 
 static void neuralrack_gui_destroy(const clap_plugin *plugin) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (plug->guiIsCreated) plug->r->cleanup();
     plug->r->quitGui();
     plug->guiIsCreated = false;
 }

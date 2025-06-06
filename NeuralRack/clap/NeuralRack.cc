@@ -57,7 +57,6 @@ public:
         fetch.stop();
         free(ui->private_ptr);
         free(ui);
-        //cleanup();
     }
 
     void startGui(Window window) {
@@ -545,6 +544,8 @@ public:
 
     void cleanup() {
         plugin_cleanup(ui);
+        free(ui->private_ptr);
+        ui->private_ptr = NULL;
         // Xputty free all memory used
         // main_quit(&ui->main);
     }

@@ -43,6 +43,7 @@ struct neuralrack_plugin_t {
     float SampleRate;
     std::string state;
     bool isInited;
+    bool guiIsCreated;
 };
 
 /****************************************************************
@@ -139,11 +140,15 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
             plug->r->enableEngine(1);
             plug->r->setParent(hostWin);
             plug->r->showGui();
+            plug->guiIsCreated = true;
             break;
         }
-        case effEditClose:
+        case effEditClose: {
+            if (plug->guiIsCreated) plug->r->cleanup();
             plug->r->quitGui();
+            plug->guiIsCreated = false;
             break;
+        }
         case effEditIdle:
             break;
         //case effGetProgram:
@@ -182,6 +187,7 @@ AEffect* VSTPluginMain(audioMasterCallback audioMaster) {
     plug->editorRect = {0, 0, (short) plug->height, (short) plug->width};
     plug->SampleRate = 48000.0;
     plug->isInited = false;
+    plug->guiIsCreated = false;
 
     effect->magic = kEffectMagic;
     effect->dispatcher = dispatcher;

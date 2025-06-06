@@ -494,7 +494,7 @@ void setKnobFrame(Widget_t* w, int x, int y, int wi, int h) {
     cairo_pattern_add_color_stop_rgba
         (pat, 0, c->bg[0]*4.5, c->bg[1]*4.5, c->bg[2]*4.5,1.0);
     cairo_pattern_add_color_stop_rgba
-        (pat, 0.2, c->bg[0]*3.0, c->bg[1]*3.0, c->bg[2]*4.0,1.0);
+        (pat, 0.2, c->bg[0]*3.0, c->bg[1]*3.0, c->bg[2]*3.0,1.0);
     cairo_pattern_add_color_stop_rgba
         (pat, 0.3, c->bg[0]*2.0, c->bg[1]*2.0, c->bg[2]*2.0,1.0);
     cairo_pattern_add_color_stop_rgba 
@@ -550,9 +550,9 @@ static void draw_my_knob(void *w_, void* user_data) {
         );
         cairo_pattern_add_color_stop_rgb(pat, 0.00, 0.33, 0.33, 0.33);
         cairo_pattern_add_color_stop_rgb(pat, 0.1, 0.20, 0.20, 0.20);
-        cairo_pattern_add_color_stop_rgb(pat, 0.30, 0.09, 0.09, 0.09);
-        cairo_pattern_add_color_stop_rgb(pat, 0.65, 0.03, 0.03, 0.03);
-        cairo_pattern_add_color_stop_rgb(pat, 1.00, 0.01, 0.01, 0.01);
+        cairo_pattern_add_color_stop_rgb(pat, 0.25, 0.09, 0.09, 0.09);
+        cairo_pattern_add_color_stop_rgb(pat, 0.65, 0.063, 0.063, 0.063);
+        cairo_pattern_add_color_stop_rgb(pat, 1.00, 0.033, 0.033, 0.033);
         cairo_set_source(w->crb, pat);
         cairo_fill_preserve(w->crb);
         cairo_pattern_destroy(pat);
