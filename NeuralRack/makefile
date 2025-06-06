@@ -499,6 +499,7 @@ ifneq ("$(wildcard ../bin/$(NAME).clap)","")
 	@$(B_ECHO) "Install  $(NAME).clap to $(DESTDIR)$(CLAP_INSTAL_DIR)/$(reset)"
 	$(QUIET)mkdir -p $(DESTDIR)$(CLAP_INSTAL_DIR)/
 	$(QUIET)cp -r ../bin/$(NAME).clap $(DESTDIR)$(CLAP_INSTAL_DIR)/$(NAME).clap
+	@$(B_ECHO) ". ., done$(reset)"
 else
 	@$(B_ECHO) "$(NAME).clap Clap skipped$(reset)"
 endif
@@ -506,6 +507,7 @@ ifneq ("$(wildcard ../bin/$(NAME)vst.$(LIB_EXT))","")
 	@$(B_ECHO) "Install  $(NAME)vst.$(LIB_EXT) to $(DESTDIR)$(VST2_INSTAL_DIR)/$(reset)"
 	$(QUIET)mkdir -p $(DESTDIR)$(VST2_INSTAL_DIR)/
 	$(QUIET)cp -r ../bin/$(NAME)vst.$(LIB_EXT) $(DESTDIR)$(VST2_INSTAL_DIR)/$(NAME)vst.$(LIB_EXT)
+	@$(B_ECHO) ". ., done$(reset)"
 else
 	@$(B_ECHO) "$(NAME)vst.$(LIB_EXT) vst2 skipped$(reset)"
 endif
