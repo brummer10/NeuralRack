@@ -142,6 +142,10 @@ public:
         widget_hide(TopWin);
         firstLoop = false;
     }
+    
+    void quitMain() {
+        main_quit(&ui->main);
+    }
 
     void quitGui() {
         fetch.stop();

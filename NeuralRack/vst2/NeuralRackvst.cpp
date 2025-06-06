@@ -144,7 +144,10 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
             break;
         }
         case effEditClose: {
-            if (plug->guiIsCreated) plug->r->cleanup();
+            if (plug->guiIsCreated) {
+                plug->r->cleanup();
+                plug->r->quitMain();
+            }
             plug->r->quitGui();
             plug->guiIsCreated = false;
             break;
