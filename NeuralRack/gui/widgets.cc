@@ -542,7 +542,7 @@ static void draw_my_knob(void *w_, void* user_data) {
         draw_image_knob(w, width, height);
     } else {
 
-       float body = knob_x/2.4;
+        float body = knob_x/2.4;
         cairo_arc(w->crb,knobx1, knoby1, body, 0, 2 * M_PI );
 
         cairo_pattern_t *pat = cairo_pattern_create_linear(

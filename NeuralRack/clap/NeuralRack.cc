@@ -23,6 +23,7 @@
 
 #include "engine.h"
 #include "ParallelThread.h"
+#include "Parameter.h"
 #define CLAPPLUG
 #include "NeuralRack.c"
 
@@ -30,10 +31,9 @@ class NeuralRack
 {
 public:
     Widget_t*               TopWin;
-    std::atomic<bool>       paramChanged;
-    std::atomic<bool>       controllerChanged;
+    Params                  param;
 
-    NeuralRack() : engine() {
+    NeuralRack() : engine(), param() {
         workToDo.store(false, std::memory_order_release);
         s_time = 0.0;
         ui = (X11_UI*)malloc(sizeof(X11_UI));
@@ -47,8 +47,7 @@ public:
         title = "NeuralRack";
         firstLoop = true;
         p = 0;
-        paramChanged.store(false, std::memory_order_release);
-        controllerChanged.store(false, std::memory_order_release);
+        registerParameters();
         for(int i = 0;i<CONTROLS;i++)
             ui->widget[i] = NULL;
     }
@@ -57,6 +56,33 @@ public:
         fetch.stop();
         free(ui->private_ptr);
         free(ui);
+    }
+
+    void registerParameters() {
+        param.registerParam("Buffered Mode",  "Global", 0,2,0,1,     (void*)&engine.buffered,      true,  Is_FLOAT);
+        param.registerParam("Enable",         "Global", 0,1,0,1,     (void*)&engine.bypass,        true,  IS_UINT);
+
+        param.registerParam("Gate Enable",    "NoiseGate",0,1,0,1,   (void*)&engine.ngOnOff,       true,  IS_UINT);
+        param.registerParam("Gate Thresh",    "NoiseGate", 0.01, 0.31, 0.017, 0.001, (void*)&engine.ngate->threshold, false, Is_FLOAT);
+
+        param.registerParam("Norm Slot A",    "Pedal",  0,1,0,1,     (void*)&engine.normSlotA,      true,  IS_INT);
+        param.registerParam("Input Gain A",   "Pedal", -20,20,0,0.1, (void*)&engine.inputGain,      false, Is_FLOAT);
+        param.registerParam("Output Gain A",  "Pedal", -20,20,0,0.1, (void*)&engine.outputGain,     false, Is_FLOAT);
+
+        param.registerParam("Norm Slot B",    "Amp",    0,1,0,1,     (void*)&engine.normSlotB,      true,  IS_INT);
+        param.registerParam("Input Gain B",   "Amp",   -20,20,0,0.1, (void*)&engine.inputGain1,     false, Is_FLOAT);
+        param.registerParam("Output Gain B",  "Amp",   -20,20,0,0.1, (void*)&engine.outputGain1,    false, Is_FLOAT);
+
+        param.registerParam("EQ Enable",      "EQ",     0,1,0,1,     (void*)&engine.eqOnOff,        true,  IS_UINT);
+        param.registerParam("EQ Band 1",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider1, false, Is_FLOAT);
+        param.registerParam("EQ Band 2",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider0, false, Is_FLOAT);
+        param.registerParam("EQ Band 3",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider2, false, Is_FLOAT);
+        param.registerParam("EQ Band 4",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider3, false, Is_FLOAT);
+        param.registerParam("EQ Band 5",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider4, false, Is_FLOAT);
+        param.registerParam("EQ Band 6",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider5, false, Is_FLOAT);
+
+        param.registerParam("IR Out Gain L",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain,   false, Is_FLOAT);
+        param.registerParam("IR Out Gain R",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain1,  false, Is_FLOAT);
     }
 
     void startGui(Window window) {
@@ -157,9 +183,9 @@ public:
             checkParentWindowSize(TopWin->width, TopWin->height);
             firstLoop = false;
         }
-        if (paramChanged.load(std::memory_order_acquire)) {
+        if (param.paramChanged.load(std::memory_order_acquire)) {
             getEngineValues();
-            paramChanged.store(false, std::memory_order_release);
+            param.paramChanged.store(false, std::memory_order_release);
         }
         run_embedded(&ui->main);
     }
@@ -298,7 +324,7 @@ public:
                 engine.normSlotB = static_cast<int32_t>(value);
             break;
             case 14:
-                engine.bypass = static_cast<int32_t>(value);
+                engine.bypass = static_cast<uint32_t>(value);
             break;
             case 15:
             {
@@ -366,7 +392,7 @@ public:
             break;
         }
         // inform the process thread that a controller value was changed by the GUI thread
-        controllerChanged.store(true, std::memory_order_release);
+        param.controllerChanged.store(true, std::memory_order_release);
     }
 
     // send a file name from GUI to the engine

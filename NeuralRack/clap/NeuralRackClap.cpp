@@ -15,8 +15,6 @@
 
 typedef struct neuralrack_plugin_t neuralrack_plugin_t;
 
-#include "NeuralRackParameter.h"
-
 #define WINDOW_WIDTH  620
 #define WINDOW_HEIGHT 580
 
@@ -38,7 +36,6 @@ struct neuralrack_plugin_t {
     clap_plugin_t plugin;
     const clap_host_t *host;
     NeuralRack *r;
-    NeuralRackParams params;
     bool guiIsCreated;
     uint32_t latency;
     uint32_t width;
@@ -49,42 +46,46 @@ struct neuralrack_plugin_t {
  ** Parameter handling
  */
 
-#include "NeuralRackParameter.cc"
-
-static uint32_t params_count(const clap_plugin_t*) {
-    return (uint32_t)neuralrack_parameters.size();
+static uint32_t params_count(const clap_plugin_t* plugin) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    return (uint32_t)plug->r->param.parameter.size();
 }
 
-static bool params_get_info(const clap_plugin_t*, uint32_t param_index, clap_param_info_t* param_info) {
-    if (param_index >= neuralrack_parameters.size()) return false;
-    const auto& def = neuralrack_parameters[param_index];
+static bool params_get_info(const clap_plugin_t* plugin, uint32_t param_index, clap_param_info_t* param_info) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (param_index >= plug->r->param.parameter.size()) return false;
+    const auto& def = plug->r->param.parameter[param_index];
     memset(param_info, 0, sizeof(*param_info));
     param_info->id = def.id;
     strncpy(param_info->name, def.name.c_str(), CLAP_NAME_SIZE-1);
-    strncpy(param_info->module, def.module.c_str(), CLAP_PATH_SIZE-1);
+    strncpy(param_info->module, def.group.c_str(), CLAP_PATH_SIZE-1);
     param_info->default_value = def.def;
     param_info->min_value = def.min;
     param_info->max_value = def.max;
-    param_info->flags = def.flags;
+    uint32_t flags = CLAP_PARAM_IS_AUTOMATABLE;
+    if (def.isStepped) flags |= CLAP_PARAM_IS_STEPPED;
+    param_info->flags = flags;
     param_info->cookie = nullptr;
     return true;
 }
 
 static bool params_get_value(const clap_plugin_t* plugin, clap_id param_id, double* value) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
-    *value = plug->params.getParam(plug, param_id);
+    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
+    *value = plug->r->param.getParam(param_id);
     return true;
 }
 
-static bool params_value_to_text(const clap_plugin_t*, clap_id param_id, double value, char* out, uint32_t size) {
-    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
+static bool params_value_to_text(const clap_plugin_t* plugin, clap_id param_id, double value, char* out, uint32_t size) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
     snprintf(out, size, "%.2f", value);
     return true;
 }
 
-static bool params_text_to_value(const clap_plugin_t*, clap_id param_id, const char* text, double* out_value) {
-    if (param_id < 0 || param_id >= PARAM_COUNT) return false;
+static bool params_text_to_value(const clap_plugin_t* plugin, clap_id param_id, const char* text, double* out_value) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
     *out_value = atof(text);
     return true;
 }
@@ -95,7 +96,7 @@ static void sync_params_to_plug(const clap_plugin_t *plugin, const clap_event_he
         switch (hdr->type) {
             case CLAP_EVENT_PARAM_VALUE: {
                 const clap_event_param_value_t *ev = (const clap_event_param_value_t *)hdr;
-                plug->params.setParam(plug, ev->param_id, ev->value);
+                plug->r->param.setParam(ev->param_id, ev->value);
                 break;
             }
         }
@@ -104,7 +105,7 @@ static void sync_params_to_plug(const clap_plugin_t *plugin, const clap_event_he
 
 static void sync_params_to_host(const clap_plugin_t *plugin, const clap_output_events_t *out) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    for (uint32_t i = 0; i < PARAM_COUNT; i++) {
+    for (uint32_t i = 0; i < plug->r->param.parameter.size(); i++) {
         clap_event_param_value_t event = {};
         event.header.size = sizeof(event);
         event.header.time = 0;
@@ -117,7 +118,7 @@ static void sync_params_to_host(const clap_plugin_t *plugin, const clap_output_e
         event.port_index = -1;
         event.channel = -1;
         event.key = -1;
-        event.value = plug->params.getParam(plug, i);;
+        event.value = plug->r->param.getParam(i);
         out->try_push(out, &event.header);
     }
 }
@@ -130,8 +131,8 @@ static void params_flush(const clap_plugin_t *plugin,
         const clap_event_header_t *ev = in->get(in, i);
         if (ev->type == CLAP_EVENT_PARAM_VALUE) {
             auto *p = (const clap_event_param_value_t *)ev;
-            if (p->param_id >= 0 && p->param_id < PARAM_COUNT) {
-                plug->params.setParam(plug, p->param_id, p->value);
+            if (p->param_id >= 0 && p->param_id < plug->r->param.parameter.size()) {
+                plug->r->param.setParam(p->param_id, p->value);
             }
         }
     }
@@ -274,7 +275,6 @@ static bool neuralrack_gui_create(const clap_plugin *plugin, const char *api, bo
         if (!plug->guiIsCreated) {
             plug->r->startGui();
             plug->r->enableEngine(1);
-            fprintf(stderr, "createGui\n");
         }
         plug->guiIsCreated = true;
         return true;
@@ -391,9 +391,9 @@ static clap_process_status neuralrack_process(const clap_plugin_t *plugin, const
     uint32_t ev_index = 0;
     uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
-    if (plug->r->controllerChanged.load(std::memory_order_acquire)) {
+    if (plug->r->param.controllerChanged.load(std::memory_order_acquire)) {
         sync_params_to_host(plugin, process->out_events);
-        plug->r->controllerChanged.store(false, std::memory_order_release);
+        plug->r->param.controllerChanged.store(false, std::memory_order_release);
     }
 
     for (uint32_t i = 0; i < nframes;++i) {
