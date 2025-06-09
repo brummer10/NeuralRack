@@ -59,19 +59,16 @@ public:
     }
 
     void registerParameters() {
+        //                  name             group   min, max, def, step   value              isStepped  type
         param.registerParam("Buffered Mode",  "Global", 0,2,0,1,     (void*)&engine.buffered,      true,  Is_FLOAT);
         param.registerParam("Enable",         "Global", 0,1,0,1,     (void*)&engine.bypass,        true,  IS_UINT);
 
-        param.registerParam("Gate Enable",    "NoiseGate",0,1,0,1,   (void*)&engine.ngOnOff,       true,  IS_UINT);
+        param.registerParam("Gate Enable",    "NoiseGate", 0,1,0,1,  (void*)&engine.ngOnOff,       true,  IS_UINT);
         param.registerParam("Gate Thresh",    "NoiseGate", 0.01, 0.31, 0.017, 0.001, (void*)&engine.ngate->threshold, false, Is_FLOAT);
 
         param.registerParam("Norm Slot A",    "Pedal",  0,1,0,1,     (void*)&engine.normSlotA,      true,  IS_INT);
         param.registerParam("Input Gain A",   "Pedal", -20,20,0,0.1, (void*)&engine.inputGain,      false, Is_FLOAT);
         param.registerParam("Output Gain A",  "Pedal", -20,20,0,0.1, (void*)&engine.outputGain,     false, Is_FLOAT);
-
-        param.registerParam("Norm Slot B",    "Amp",    0,1,0,1,     (void*)&engine.normSlotB,      true,  IS_INT);
-        param.registerParam("Input Gain B",   "Amp",   -20,20,0,0.1, (void*)&engine.inputGain1,     false, Is_FLOAT);
-        param.registerParam("Output Gain B",  "Amp",   -20,20,0,0.1, (void*)&engine.outputGain1,    false, Is_FLOAT);
 
         param.registerParam("EQ Enable",      "EQ",     0,1,0,1,     (void*)&engine.eqOnOff,        true,  IS_UINT);
         param.registerParam("EQ Band 1",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider1, false, Is_FLOAT);
@@ -80,6 +77,10 @@ public:
         param.registerParam("EQ Band 4",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider3, false, Is_FLOAT);
         param.registerParam("EQ Band 5",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider4, false, Is_FLOAT);
         param.registerParam("EQ Band 6",      "EQ",    -20,20,0,0.1, (void*)&engine.peq->fVslider5, false, Is_FLOAT);
+
+        param.registerParam("Norm Slot B",    "Amp",    0,1,0,1,     (void*)&engine.normSlotB,      true,  IS_INT);
+        param.registerParam("Input Gain B",   "Amp",   -20,20,0,0.1, (void*)&engine.inputGain1,     false, Is_FLOAT);
+        param.registerParam("Output Gain B",  "Amp",   -20,20,0,0.1, (void*)&engine.outputGain1,    false, Is_FLOAT);
 
         param.registerParam("IR Out Gain L",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain,   false, Is_FLOAT);
         param.registerParam("IR Out Gain R",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain1,  false, Is_FLOAT);
@@ -168,13 +169,11 @@ public:
         widget_hide(TopWin);
         firstLoop = false;
     }
-    
-    void quitMain() {
-        main_quit(&ui->main);
-    }
 
     void quitGui() {
         fetch.stop();
+        cleanup();
+        main_quit(&ui->main);
     }
 
     void runGui() {
@@ -237,6 +236,7 @@ public:
     void initEngine(uint32_t rate, int32_t prio, int32_t policy) {
         engine.init(rate, prio, policy);
         initEQ();
+        engine.bypass = 1;
         s_time = (1.0 / (double)rate) * 1000;
     }
 
@@ -282,19 +282,24 @@ public:
             // 0 + 1 audio ports
             case 2:
                 engine.inputGain = value;
+                param.setParamDirty(5 , true);
             break;
             case 3:
                 engine.outputGain = value;
+                param.setParamDirty(6 , true);
             break;
             case 4:
                 engine.outputGain1 = value;
+                param.setParamDirty(16 , true);
             break;
             // 5 + 6 atom ports
             case 7:
                 engine.IRoutputGain = value;
+                param.setParamDirty(17 , true);
             break;
             case 8:
                 engine.IRoutputGain1 = value;
+                param.setParamDirty(18 , true);
             break;
             case 9:
             {
@@ -316,15 +321,19 @@ public:
             break;
             case 11:
                 engine.inputGain1 = value;
+                param.setParamDirty(15 , true);
             break;
             case 12:
                 engine.normSlotA = static_cast<int32_t>(value);
+                param.setParamDirty(4 , true);
             break;
             case 13:
                 engine.normSlotB = static_cast<int32_t>(value);
+                param.setParamDirty(14 , true);
             break;
             case 14:
                 engine.bypass = static_cast<uint32_t>(value);
+                param.setParamDirty(1 , true);
             break;
             case 15:
             {
@@ -359,34 +368,44 @@ public:
             {
                 engine.buffered = value;
                 engine._notify_ui.store(true, std::memory_order_release);
+                param.setParamDirty(0 , true);
             }
             break;
             case 24:
                 engine.peq->fVslider1 =  value;
+                param.setParamDirty(8 , true);
             break;
             case 25:
                 engine.peq->fVslider0 =  value;
+                param.setParamDirty(9 , true);
             break;
             case 26:
                 engine.peq->fVslider2 =  value;
+                param.setParamDirty(10 , true);
             break;
             case 27:
                 engine.peq->fVslider3 =  value;
+                param.setParamDirty(11 , true);
             break;
             case 28:
                 engine.peq->fVslider4 =  value;
+                param.setParamDirty(12 , true);
             break;
             case 29:
                 engine.peq->fVslider5 =  value;
+                param.setParamDirty(13 , true);
             break;
             case 30:
                 engine.eqOnOff = static_cast<uint32_t>(value);
+                param.setParamDirty(7 , true);
             break;
             case 31:
                 engine.ngate->threshold =  value;
+                param.setParamDirty(3 , true);
             break;
             case 32:
                 engine.ngOnOff = static_cast<uint32_t>(value);
+                param.setParamDirty(2 , true);
             break;
             default:
             break;

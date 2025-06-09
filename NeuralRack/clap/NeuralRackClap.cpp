@@ -36,6 +36,8 @@ struct neuralrack_plugin_t {
     clap_plugin_t plugin;
     const clap_host_t *host;
     NeuralRack *r;
+    std::string state;
+    bool isInited;
     bool guiIsCreated;
     uint32_t latency;
     uint32_t width;
@@ -48,13 +50,13 @@ struct neuralrack_plugin_t {
 
 static uint32_t params_count(const clap_plugin_t* plugin) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    return (uint32_t)plug->r->param.parameter.size();
+    return (uint32_t)plug->r->param.getParamCount();
 }
 
 static bool params_get_info(const clap_plugin_t* plugin, uint32_t param_index, clap_param_info_t* param_info) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    if (param_index >= plug->r->param.parameter.size()) return false;
-    const auto& def = plug->r->param.parameter[param_index];
+    if (param_index >= plug->r->param.getParamCount()) return false;
+    const auto& def = plug->r->param.getParameter(param_index);
     memset(param_info, 0, sizeof(*param_info));
     param_info->id = def.id;
     strncpy(param_info->name, def.name.c_str(), CLAP_NAME_SIZE-1);
@@ -71,21 +73,21 @@ static bool params_get_info(const clap_plugin_t* plugin, uint32_t param_index, c
 
 static bool params_get_value(const clap_plugin_t* plugin, clap_id param_id, double* value) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
+    if (param_id < 0 || param_id >= plug->r->param.getParamCount()) return false;
     *value = plug->r->param.getParam(param_id);
     return true;
 }
 
 static bool params_value_to_text(const clap_plugin_t* plugin, clap_id param_id, double value, char* out, uint32_t size) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
+    if (param_id < 0 || param_id >= plug->r->param.getParamCount()) return false;
     snprintf(out, size, "%.2f", value);
     return true;
 }
 
 static bool params_text_to_value(const clap_plugin_t* plugin, clap_id param_id, const char* text, double* out_value) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    if (param_id < 0 || param_id >= plug->r->param.parameter.size()) return false;
+    if (param_id < 0 || param_id >= plug->r->param.getParamCount()) return false;
     *out_value = atof(text);
     return true;
 }
@@ -105,21 +107,24 @@ static void sync_params_to_plug(const clap_plugin_t *plugin, const clap_event_he
 
 static void sync_params_to_host(const clap_plugin_t *plugin, const clap_output_events_t *out) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    for (uint32_t i = 0; i < plug->r->param.parameter.size(); i++) {
-        clap_event_param_value_t event = {};
-        event.header.size = sizeof(event);
-        event.header.time = 0;
-        event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-        event.header.type = CLAP_EVENT_PARAM_VALUE;
-        event.header.flags = 0;
-        event.param_id = i;
-        event.cookie = NULL;
-        event.note_id = -1;
-        event.port_index = -1;
-        event.channel = -1;
-        event.key = -1;
-        event.value = plug->r->param.getParam(i);
-        out->try_push(out, &event.header);
+    for (int i = 0; i < plug->r->param.getParamCount(); i++) {
+        if (plug->r->param.isParamDirty(i)) {
+            clap_event_param_value_t event = {};
+            event.header.size = sizeof(event);
+            event.header.time = 0;
+            event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            event.header.type = CLAP_EVENT_PARAM_VALUE;
+            event.header.flags = 0;
+            event.param_id = i;
+            event.cookie = NULL;
+            event.note_id = -1;
+            event.port_index = -1;
+            event.channel = -1;
+            event.key = -1;
+            event.value = plug->r->param.getParam(i);
+            out->try_push(out, &event.header);
+            plug->r->param.setParamDirty(i, false);
+        }
     }
 }
 
@@ -131,7 +136,7 @@ static void params_flush(const clap_plugin_t *plugin,
         const clap_event_header_t *ev = in->get(in, i);
         if (ev->type == CLAP_EVENT_PARAM_VALUE) {
             auto *p = (const clap_event_param_value_t *)ev;
-            if (p->param_id >= 0 && p->param_id < plug->r->param.parameter.size()) {
+            if (p->param_id >= 0 && p->param_id < plug->r->param.getParamCount()) {
                 plug->r->param.setParam(p->param_id, p->value);
             }
         }
@@ -197,20 +202,19 @@ static const clap_plugin_latency_t latency_extension = {
 // State Management
 static bool neuralrack_state_save(const clap_plugin_t *plugin, const clap_ostream_t *stream) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    std::string state;
-    plug->r->saveState(&state);
-    stream->write(stream, state.c_str(), strlen(state.c_str()));
+    plug->r->saveState(&plug->state);
+    stream->write(stream, plug->state.c_str(), strlen(plug->state.c_str()));
     return true;
 }
 
 static bool neuralrack_state_load(const clap_plugin_t *plugin, const clap_istream_t *stream) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    char state[2048];
-    char *curr = state;
+    char _state[2048];
+    char *curr = _state;
     int thisread = stream->read(stream, curr, 2048);
     if (thisread < 0) return false;
-    std::string stream_  = state ;
-    plug->r->readState(stream_);
+    plug->state  = _state ;
+    if(plug->isInited) plug->r->readState(plug->state);
     return true;
 }
 
@@ -274,7 +278,6 @@ static bool neuralrack_gui_create(const clap_plugin *plugin, const char *api, bo
     if (strcmp(api, GUIAPI) == 0) {
         if (!plug->guiIsCreated) {
             plug->r->startGui();
-            plug->r->enableEngine(1);
         }
         plug->guiIsCreated = true;
         return true;
@@ -285,10 +288,8 @@ static bool neuralrack_gui_create(const clap_plugin *plugin, const char *api, bo
 static void neuralrack_gui_destroy(const clap_plugin *plugin) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
     if (plug->guiIsCreated) {
-        plug->r->cleanup();
-        plug->r->quitMain();
-        }
-    plug->r->quitGui();
+        plug->r->quitGui();
+    }
     plug->guiIsCreated = false;
 }
 
@@ -313,7 +314,6 @@ static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_wi
         #else
         plug->r->startGui(window->x11);
         #endif
-        plug->r->enableEngine(1);
     }
     plug->guiIsCreated = true;
     #if defined(_WIN32)
@@ -321,7 +321,6 @@ static bool neuralrack_gui_set_parent(const clap_plugin_t *plugin, const clap_wi
     #else
     plug->r->setParent(window->x11);
     #endif
-    //plug->r->showGui();
     return true;
 }
 
@@ -362,8 +361,8 @@ static const clap_plugin_gui_t extensionGUI = {
 
 // Initialize the plugin
 static bool neuralrack_init(const clap_plugin_t *plugin) {
-    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    plug->r->initEngine(48000, 25, 1);
+    //neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    //plug->r->initEngine(48000, 25, 1);
     return true;
 }
 
@@ -424,18 +423,23 @@ static clap_process_status neuralrack_process(const clap_plugin_t *plugin, const
     return CLAP_PROCESS_CONTINUE;
 }
 
-// Finally get the sample rate and re-init the engine
+// Finally get the sample rate and init the engine
 static bool neuralrack_activate(const struct clap_plugin *plugin,
                              double                    sample_rate,
                              uint32_t                  min_frames_count,
                              uint32_t                  max_frames_count) {
     neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
-    //if (sample_rate != 48000) 
     plug->r->initEngine(sample_rate, 25, 1);
+    plug->isInited = true;
+    if(!plug->state.empty()) plug->r->readState(plug->state);
     return true;
 }
 
-static void neuralrack_deactivate(const struct clap_plugin *plugin) {}
+// clear the state string when we get deactivated
+static void neuralrack_deactivate(const struct clap_plugin *plugin) {
+    neuralrack_plugin_t *plug = (neuralrack_plugin_t *)plugin->plugin_data;
+    if(!plug->state.empty()) plug->state.clear();
+}
 
 static bool neuralrack_start_processing(const struct clap_plugin *plugin) { return true; }
 
@@ -473,6 +477,7 @@ static const clap_plugin_t *neuralrack_create(const clap_host_t *host) {
     if (!plug) return NULL;
     plug->r = new NeuralRack();
     plug->guiIsCreated = false;
+    plug->isInited = false;
     plug->width = WINDOW_WIDTH;
     plug->height = WINDOW_HEIGHT;
     plug->plugin.desc = &neuralrack_descriptor;

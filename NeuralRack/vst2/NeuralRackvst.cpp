@@ -121,7 +121,9 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
         case effOpen:
             break;
         case effClose:
-            plug->r->quitGui();
+            if (plug->guiIsCreated) {
+                plug->r->quitGui();
+            }
             delete plug->r;
             free(plug);
             break;
@@ -137,7 +139,6 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
         case effEditOpen: {
             Window hostWin = (Window)(size_t)ptr;
             plug->r->startGui();
-            plug->r->enableEngine(1);
             plug->r->setParent(hostWin);
             plug->r->showGui();
             plug->guiIsCreated = true;
@@ -145,10 +146,8 @@ static intptr_t dispatcher(AEffect* effect, int32_t opCode, int32_t index, intpt
         }
         case effEditClose: {
             if (plug->guiIsCreated) {
-                plug->r->cleanup();
-                plug->r->quitMain();
+                plug->r->quitGui();
             }
-            plug->r->quitGui();
             plug->guiIsCreated = false;
             break;
         }
