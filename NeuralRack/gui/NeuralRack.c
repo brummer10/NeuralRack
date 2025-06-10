@@ -200,7 +200,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_widget_color(ui->widget[26], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
     widget_get_png(ui->widget[26], LDVAR(exit__png));
 
-    ui->widget[25] = add_lv2_knob (ui->widget[25], ui->elem[4], 31, "", ui, 510, 9, 60, 60); //Threshold
+    ui->widget[25] = add_lv2_knob (ui->widget[25], ui->elem[4], 31, "", ui, 510, 10, 60, 60); //Threshold
     set_adjustment(ui->widget[25]->adj, 0.017, 0.017, 0.01, 0.31, 0.001, CL_CONTINUOS);
     // controller label colour
     set_widget_color(ui->widget[25], (Color_state)0, (Color_mod)0, 0.235, 0.215, 0.282, 1.0);

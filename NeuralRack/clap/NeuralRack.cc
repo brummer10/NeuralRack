@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <atomic>
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -61,10 +60,10 @@ public:
     void registerParameters() {
         //                  name             group   min, max, def, step   value              isStepped  type
         param.registerParam("Buffered Mode",  "Global", 0,2,0,1,     (void*)&engine.buffered,      true,  Is_FLOAT);
-        param.registerParam("Enable",         "Global", 0,1,0,1,     (void*)&engine.bypass,        true,  IS_UINT);
+        param.registerParam("Enable",         "Global", 0,1,1,1,     (void*)&engine.bypass,        true,  IS_UINT);
 
         param.registerParam("Gate Enable",    "NoiseGate", 0,1,0,1,  (void*)&engine.ngOnOff,       true,  IS_UINT);
-        param.registerParam("Gate Thresh",    "NoiseGate", 0.01, 0.31, 0.017, 0.001, (void*)&engine.ngate->threshold, false, Is_FLOAT);
+        param.registerParam("Gate Thresh",    "NoiseGate", 0.01,0.31,0.017,0.001, (void*)&engine.ngate->threshold, false, Is_FLOAT);
 
         param.registerParam("Norm Slot A",    "Pedal",  0,1,0,1,     (void*)&engine.normSlotA,      true,  IS_INT);
         param.registerParam("Input Gain A",   "Pedal", -20,20,0,0.1, (void*)&engine.inputGain,      false, Is_FLOAT);
@@ -229,7 +228,7 @@ public:
         engine.peq->fVslider3 =  0.0;
         engine.peq->fVslider4 =  0.0;
         engine.peq->fVslider5 =  -20.0;
-        engine.ngate->threshold = -0.017;
+        engine.ngate->threshold = 0.017;
         engine.ngOnOff = 0;
     }
 
@@ -237,6 +236,8 @@ public:
         engine.init(rate, prio, policy);
         initEQ();
         engine.bypass = 1;
+        param.setParamDirty(1 , true);
+        param.controllerChanged.store(true, std::memory_order_release);
         s_time = (1.0 / (double)rate) * 1000;
     }
 
