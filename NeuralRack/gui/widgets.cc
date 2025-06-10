@@ -247,7 +247,7 @@ void draw_elem(void *w_, void* user_data) {
         char label[124];
         memset(label, '\0', sizeof(char)*124);
         cairo_text_extents_t extents_f;
-        cairo_set_font_size (w->crb, w->app->normal_font);
+        cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(m.filename));
         
         if ((slen - 4) > 38) {
@@ -320,7 +320,7 @@ void draw_ir_elem(void *w_, void* user_data) {
         char label[124];
         memset(label, '\0', sizeof(char)*124);
         cairo_text_extents_t extents_f;
-        cairo_set_font_size (w->crb, w->app->normal_font);
+        cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir.filename));
         
         if ((slen - 4) > 40) {
@@ -343,7 +343,7 @@ void draw_ir_elem(void *w_, void* user_data) {
         char label[124];
         memset(label, '\0', sizeof(char)*124);
         cairo_text_extents_t extents_f;
-        cairo_set_font_size (w->crb, w->app->normal_font);
+        cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir1.filename));
         
         if ((slen - 4) > 40) {

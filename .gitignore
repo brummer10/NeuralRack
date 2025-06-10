@@ -4,5 +4,6 @@
 *.d
 *.lib
 *.exe
+*.clap
 bin/*
 NeuralRack/Neuralrack

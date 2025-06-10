@@ -75,6 +75,7 @@ public:
         widget_set_icon_from_png(TopWin,LDVAR(NeuralRack_png));
         ui->win->parent_struct = ui;
         ui->win->private_struct = (void*)this;
+        ui->win->scale.gravity = NORTHWEST;
         plugin_create_controller_widgets(ui,"standalone");
 
         Widget_t* EngineMenu = menubar_add_menu(Menu, "Engine");

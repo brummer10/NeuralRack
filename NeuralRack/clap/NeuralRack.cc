@@ -98,6 +98,7 @@ public:
         #endif
         TopWin->flags |= HIDE_ON_DELETE;
         ui->win = create_widget(&ui->main, TopWin, 0, 0, w, h);
+        ui->win->scale.gravity = NORTHWEST;
         widget_set_title(TopWin, title.c_str());
         ui->win->parent_struct = ui;
         ui->win->private_struct = (void*)this;
