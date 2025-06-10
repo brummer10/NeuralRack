@@ -456,7 +456,7 @@ static const clap_plugin_descriptor_t neuralrack_descriptor = {
     .url = "https://github.com/brummer10/NeuralRack",
     .manual_url = "https://github.com/brummer10/NeuralRack",
     .support_url = "https://github.com/brummer10/NeuralRack",
-    .version = "0.1.7",
+    .version = "0.1.9",
     .description = "CLAP plugin wrapper for NeuralRack",
     .features = (const char *[]){ CLAP_PLUGIN_FEATURE_AUDIO_EFFECT, NULL },
 };

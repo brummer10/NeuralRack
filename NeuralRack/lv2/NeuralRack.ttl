@@ -108,7 +108,7 @@ nrack:irfile1
    lv2:extensionData work:interface ,
                     state:interface ;
    lv2:minorVersion 1 ;
-   lv2:microVersion 7 ;
+   lv2:microVersion 9 ;
 
 guiext:ui <urn:brummer:neuralrack_ui> ;
 
