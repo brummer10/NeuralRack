@@ -21,6 +21,9 @@
     defined(__NetBSD__) || defined(__OpenBSD__)
 #include <pa_jack.h>
 #include <pa_linux_alsa.h>
+#else
+#include <windows.h>
+#include "pa_asio.h"
 #endif
 
 #include <algorithm>
@@ -125,21 +128,41 @@ public:
 
         devices.clear();
         #else
+        int d = Pa_GetDeviceCount();
         const PaDeviceInfo *info;
-        SampleRate = 48000;
-        info = Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice());
+        bool haveASIO = false;
+        int index = 0;
+        long minLatency, maxLatency, preferredLatency, granularity;
+        for (int i = 0; i<d;i++) {
+            info = Pa_GetDeviceInfo(i);
+            if(Pa_GetHostApiInfo(info->hostApi)->type == paASIO) {
+                err = PaAsio_GetAvailableLatencyValues( i,
+                        &minLatency, &maxLatency, &preferredLatency, &granularity );
+                haveASIO = true;
+                SampleRate = info->defaultSampleRate;
+                index = i;
+                break;
+            }
+        }
+
+        if (!haveASIO) {
+            SampleRate = 48000;
+            preferredLatency = 256;
+            info = Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice());
+        }
         std::cout << "using (" << info->name << ") " << getHostName(info->hostApi) 
-            << " with " << SampleRate << "hz Sample Rate" << std::endl;
+            << " with " << preferredLatency << " Buffer-size and " 
+            << SampleRate << "hz Sample Rate" << std::endl;
 
         PaStreamParameters inputParameters;
-        inputParameters.device = Pa_GetDefaultInputDevice();
+        inputParameters.device = haveASIO ? index : Pa_GetDefaultInputDevice();
         inputParameters.channelCount = ichannels;
         inputParameters.sampleFormat = paFloat32|paNonInterleaved;
         inputParameters.suggestedLatency = 0.050;
         inputParameters.hostApiSpecificStreamInfo = nullptr;
 
         PaStreamParameters outputParameters;
-        outputParameters.device = Pa_GetDefaultOutputDevice();
+        outputParameters.device = haveASIO ? index : Pa_GetDefaultOutputDevice();
         if (outputParameters.device == paNoDevice) return false;
         outputParameters.channelCount = ochannels;
         outputParameters.sampleFormat = paFloat32|paNonInterleaved;
@@ -148,7 +171,7 @@ public:
         //SampleRate = info->defaultSampleRate;
         err = Pa_OpenStream(&stream, ichannels ? &inputParameters : nullptr, 
                             ochannels ? &outputParameters : nullptr, SampleRate,
-                            256, paClipOff, process, arg);
+                            preferredLatency, paClipOff, process, arg);
         #endif
 
         return err == paNoError ? true : false;
