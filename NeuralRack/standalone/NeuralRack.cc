@@ -20,6 +20,7 @@
 
 #include <locale.h>
 
+#include "xpa.h"
 #include "engine.h"
 #include "ParallelThread.h"
 #define STANDALONE
@@ -31,6 +32,9 @@ class NeuralRack : public TextEntry
 {
 public:
     Widget_t*               TopWin;
+    #if defined(HAVE_PA)
+    XPa*                    xpa;
+    #endif
 
     NeuralRack() : engine() {
         workToDo.store(false, std::memory_order_release);
@@ -48,6 +52,9 @@ public:
         ui->f_index = 0;
         title = "NeuralRack";
         currentPreset = "Default";
+        #if defined(HAVE_PA)
+        xpa = nullptr;
+        #endif
         for(int i = 0;i<CONTROLS;i++)
             ui->widget[i] = NULL;
         getConfigFilePath();
@@ -60,6 +67,15 @@ public:
         free(ui);
         //cleanup();
     }
+
+    #if defined(HAVE_PA)
+    void setXPa(XPa* xpa_, bool isASIO) {
+        xpa = xpa_;
+        #if defined(_WIN32)
+        if (!isASIO) ASIOPannel->state = 4;
+        #endif
+    }
+    #endif
 
     void startGui() {
         main_init(&ui->main);
@@ -78,7 +94,14 @@ public:
         ui->win->scale.gravity = NORTHWEST;
         plugin_create_controller_widgets(ui,"standalone");
 
-        Widget_t* EngineMenu = menubar_add_menu(Menu, "Engine");
+        EngineMenu = menubar_add_menu(Menu, "Engine");
+        #if defined(HAVE_PA)
+        #if defined(_WIN32)
+        ASIOPannel = menu_add_entry(EngineMenu, "ASIO Pannel");
+        ASIOPannel->parent_struct = (void*)this;
+        ASIOPannel->func.button_release_callback = asio_callback;
+        #endif
+        #endif
         Widget_t* QuitMenu = menu_add_entry(EngineMenu, "Quit");
         QuitMenu->parent_struct = (void*)this;
         QuitMenu->func.button_release_callback = quit_callback;
@@ -427,6 +450,8 @@ private:
     Widget_t*               PresetLoadMenu;
     Widget_t*               ShowValues;
     Widget_t*               AutoConnect;
+    Widget_t*               EngineMenu;
+    Widget_t*               ASIOPannel;
     int                     processCounter;
     bool                    settingsHaveChanged;
     bool                    disableAutoConnect;
@@ -473,6 +498,18 @@ private:
             self->quitGui();
         }
     }
+
+    #if defined(HAVE_PA)
+    static void asio_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (w->flags & HAS_POINTER){
+            #if defined(_WIN32)
+            NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+            self->xpa->showAsioPannel((HWND) self->TopWin);
+            #endif
+        }
+    }
+    #endif
 
     static void openSite(std::string url) {
         std::string op = "";

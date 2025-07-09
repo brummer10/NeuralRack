@@ -44,6 +44,7 @@
 
 class XPa {
 public:
+    bool haveASIO;
 
     XPa(const char* cname){
         #if defined(__linux__) || defined(__FreeBSD__) || \
@@ -52,6 +53,8 @@ public:
         #endif
         init();
         SampleRate = 0;
+        process = nullptr;
+        haveASIO = false;
     };
 
     ~XPa(){
@@ -59,9 +62,10 @@ public:
     };
 
     // open a audio stream for input/output channels and set the audio process callback
-    bool openStream(uint32_t ichannels, uint32_t ochannels, PaStreamCallback *process, void* arg) {
+    bool openStream(uint32_t ichannels, uint32_t ochannels, PaStreamCallback *process_, void* arg) {
         #if defined(__linux__) || defined(__FreeBSD__) || \
             defined(__NetBSD__) || defined(__OpenBSD__)
+        process = process_;
         std::vector<Devices> devices;
         int d = Pa_GetDeviceCount();
         const PaDeviceInfo *info;
@@ -130,7 +134,6 @@ public:
         #else
         int d = Pa_GetDeviceCount();
         const PaDeviceInfo *info;
-        bool haveASIO = false;
         int index = 0;
         long minLatency, maxLatency, preferredLatency, granularity;
         for (int i = 0; i<d;i++) {
@@ -140,7 +143,7 @@ public:
                         &minLatency, &maxLatency, &preferredLatency, &granularity );
                 haveASIO = true;
                 SampleRate = info->defaultSampleRate;
-                index = i;
+                ASIOIndex = index = i;
                 break;
             }
         }
@@ -207,10 +210,36 @@ public:
         }
     }
 
+    #if defined(_WIN32)
+    void showAsioPannel(HWND win) {
+        if (haveASIO) {
+            stopStream();
+            int d = Pa_GetDeviceCount();
+            const PaDeviceInfo *info;
+            for (int i = 0; i<d;i++) {
+                info = Pa_GetDeviceInfo(i);
+                if(Pa_GetHostApiInfo(info->hostApi)->type == paASIO) {
+                    ASIOIndex = i;
+                    err = PaAsio_ShowControlPanel(i, (void*) win);
+                    if (err != paNoError) {
+                        std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
+                        break;
+                    }
+                    break;
+                }
+            }
+            openStream(1, 2, process, nullptr);
+            startStream();
+        }
+    }
+    #endif
+
 private:
     PaStream* stream;
+    PaStreamCallback *process;
     PaError err;
     uint32_t SampleRate;
+    int ASIOIndex;
 
     struct Devices {
         int order;

@@ -116,6 +116,7 @@ int main(int argc, char *argv[]){
         r->enableEngine(1);
         r->readConfig();
         if(!xpa.startStream()) r->quitGui();
+        r->setXPa(&xpa, xpa.haveASIO);
     }
     #else
     startJack();
