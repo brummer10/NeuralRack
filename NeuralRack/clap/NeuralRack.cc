@@ -83,6 +83,10 @@ public:
 
         param.registerParam("IR Out Gain L",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain,   false, Is_FLOAT);
         param.registerParam("IR Out Gain R",  "IR",    -20,20,0,0.1, (void*)&engine.IRoutputGain1,  false, Is_FLOAT);
+
+        param.registerParam("IR Mode",        "IR",     0,1,0,1,     (void*)&engine.IRmode,         true,  IS_UINT);
+        param.registerParam("IR Mix",         "IR",     0,1,0.5,0.01,(void*)&engine.IRmix,          false, Is_FLOAT);
+        param.registerParam("Master",         "IR",    -20,20,0,0.1, (void*)&engine.MasterOutGain,  false, Is_FLOAT);
     }
 
     void startGui(Window window) {
@@ -273,9 +277,12 @@ public:
         adj_set_value(ui->widget[21]->adj, engine.peq->fVslider3);
         adj_set_value(ui->widget[22]->adj, engine.peq->fVslider4);
         adj_set_value(ui->widget[23]->adj, engine.peq->fVslider5);
-        adj_set_value(ui->widget[24]->adj, engine.eqOnOff);
+        adj_set_value(ui->widget[24]->adj, static_cast<float>(engine.eqOnOff));
         adj_set_value(ui->widget[25]->adj, engine.ngate->threshold);
-        adj_set_value(ui->widget[26]->adj, engine.ngOnOff);
+        adj_set_value(ui->widget[26]->adj, static_cast<float>(engine.ngOnOff));
+        adj_set_value(ui->widget[27]->adj, static_cast<float>(engine.IRmode));
+        adj_set_value(ui->widget[28]->adj, engine.IRmix);
+        adj_set_value(ui->widget[29]->adj, engine.MasterOutGain);
     }
 
     // send value changes from GUI to the engine
@@ -409,6 +416,18 @@ public:
                 engine.ngOnOff = static_cast<uint32_t>(value);
                 param.setParamDirty(2 , true);
             break;
+            case 33:
+                engine.IRmode = static_cast<uint32_t>(value);
+                param.setParamDirty(19 , true);
+            break;
+            case 34:
+                engine.IRmix = value;
+                param.setParamDirty(20 , true);
+            break;
+            case 35:
+                engine.MasterOutGain = value;
+                param.setParamDirty(21 , true);
+            break;
             default:
             break;
         }
@@ -532,6 +551,15 @@ public:
                 engine.ngate->threshold = check_stod(value);
                 buf >> value;
                 engine.ngOnOff = static_cast<uint32_t>(check_stod(value));
+                // break here in case a old preset is in use
+                if(buf.peek() == decltype(buf)::traits_type::eof()) continue;
+                buf >> value;
+                if (value.compare("|") == 0) continue;
+                engine.IRmode = static_cast<uint32_t>(check_stod(value));
+                buf >> value;
+                engine.IRmix = check_stod(value);
+                buf >> value;
+                engine.MasterOutGain = check_stod(value);
             } else if (key.compare("[Model]") == 0) {
                 engine.model_file = remove_sub(line, "[Model] ");
                 engine._ab.fetch_add(1, std::memory_order_relaxed);
@@ -585,6 +613,9 @@ public:
         buffer << engine.eqOnOff << " ";
         buffer << engine.ngate->threshold << " ";
         buffer << engine.ngOnOff << " ";
+        buffer << engine.IRmode << " ";
+        buffer << engine.IRmix << " ";
+        buffer << engine.MasterOutGain << " ";
         buffer << "|";
         buffer << "[Model] " << engine.model_file << "|";
         buffer << "[Model1] " << engine.model_file1 << "|";

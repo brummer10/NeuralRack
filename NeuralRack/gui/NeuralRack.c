@@ -67,7 +67,7 @@ void set_custom_theme(X11_UI *ui) {
 
     ui->main.color_scheme->insensitive = (Colors) {
          /* cairo    / r  / g  / b  / a  /  */
-        .fg =       { 0.850, 0.850, 0.850, 0.500},
+        .fg =       { 0.450, 0.450, 0.450, 0.500},
         .bg =       { 0.100, 0.100, 0.100, 0.500},
         .base =     { 0.000, 0.000, 0.000, 0.500},
         .text =     { 0.900, 0.900, 0.900, 0.500},
@@ -375,7 +375,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_widget_color(ui->elem[2], (Color_state)0, (Color_mod)0, 0.322, 0.322, 0.322,1.0);
     ui->elem[2]->func.expose_callback = draw_ir_elem;
 
-    ui->widget[3] = add_lv2_knob (ui->widget[3], ui->elem[2], 7, "Gain (L)", ui, 25, 15, 70, 80);
+    ui->widget[3] = add_lv2_knob (ui->widget[3], ui->elem[2], 7, "Gain (L)", ui, 55, 15, 70, 80);
     set_adjustment(ui->widget[3]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
     // controller label colour
     set_widget_color(ui->widget[3], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631,1.0);
@@ -384,6 +384,15 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     // controller label colour hover
     set_widget_color(ui->widget[3], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737,1.0);
 
+    ui->widget[28] = add_lv2_knob (ui->widget[28], ui->elem[2], 34, "Mix", ui, 55, 15, 70, 80);
+    set_adjustment(ui->widget[28]->adj, 0.5, 0.5, 0.0, 1.0, 0.01, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[28], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631,1.0);
+    // controller background colour
+    set_widget_color(ui->widget[28], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[28], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737,1.0);
+
     ps->ir.fbutton = add_lv2_button(ps->ir.fbutton, ui->elem[2], "", ui, 445, 20, 22, 30);
     ps->ir.fbutton->parent_struct = (void*)&ps->ir;
     combobox_set_pop_position(ps->ir.fbutton, 0);
@@ -391,11 +400,11 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     combobox_add_entry(ps->ir.fbutton, "None");
     ps->ir.fbutton->func.value_changed_callback = file_menu_callback;
 
-    ps->ir.filebutton = add_lv2_irfile_button (ps->ir.filebutton, ui->elem[2], -3, "IR File", ui, 110, 24, 25, 25);
+    ps->ir.filebutton = add_lv2_irfile_button (ps->ir.filebutton, ui->elem[2], -3, "IR File", ui, 140, 24, 25, 25);
     ps->ir.filebutton->parent_struct = (void*)&ps->ir;
     ps->ir.filebutton->func.user_callback = file_load_response;
 
-    ui->widget[5] = add_lv2_toggle_button (ui->widget[5], ui->elem[2], 9, "", ui, 140, 24, 25, 25);
+    ui->widget[5] = add_lv2_toggle_button (ui->widget[5], ui->elem[2], 9, "", ui, 170, 24, 25, 25);
     ui->widget[13] = add_lv2_erase_button (ui->widget[13], ui->elem[2], 17, "", ui, 470, 24, 25, 25);
 
 //IR 1
@@ -408,6 +417,15 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     // controller label colour hover
     set_widget_color(ui->widget[4], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737,1.0);
 
+    ui->widget[29] = add_lv2_knob (ui->widget[29], ui->elem[2], 35, "Master", ui, 510, 15, 70, 80);
+    set_adjustment(ui->widget[29]->adj, 0.0, 0.0, -20.0, 20.0, 0.2, CL_CONTINUOS);
+    // controller label colour
+    set_widget_color(ui->widget[29], (Color_state)0, (Color_mod)0, 0.592, 0.612, 0.631,1.0);
+    // controller background colour
+    set_widget_color(ui->widget[29], (Color_state)0, (Color_mod)1, 0.083, 0.083, 0.083, 1.0);
+    // controller label colour hover
+    set_widget_color(ui->widget[29], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737,1.0);
+
     ps->ir1.fbutton = add_lv2_button(ps->ir1.fbutton, ui->elem[2], "", ui, 445, 64, 22, 30);
     ps->ir1.fbutton->parent_struct = (void*)&ps->ir1;
     combobox_set_pop_position(ps->ir1.fbutton, 0);
@@ -415,12 +433,15 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     combobox_add_entry(ps->ir1.fbutton, "None");
     ps->ir1.fbutton->func.value_changed_callback = file_menu_callback;
 
-    ps->ir1.filebutton = add_lv2_irfile_button (ps->ir1.filebutton, ui->elem[2], -4, "IR File", ui, 110, 68, 25, 25);
+    ps->ir1.filebutton = add_lv2_irfile_button (ps->ir1.filebutton, ui->elem[2], -4, "IR File", ui, 140, 68, 25, 25);
     ps->ir1.filebutton->parent_struct = (void*)&ps->ir1;
     ps->ir1.filebutton->func.user_callback = file_load_response;
 
-    ui->widget[6] = add_lv2_toggle_button (ui->widget[6], ui->elem[2], 10, "", ui, 140, 68, 25, 25);
+    ui->widget[6] = add_lv2_toggle_button (ui->widget[6], ui->elem[2], 10, "", ui, 170, 68, 25, 25);
     ui->widget[14] = add_lv2_erase_button (ui->widget[14], ui->elem[2], 18, "", ui, 470, 68, 25, 25);
+
+    // switch between Stereo and Mix output
+    ui->widget[27] = add_lv2_vswitch (ui->widget[27], ui->elem[2], 33, "Stereo", ui, 15, 18, 50, 80);
 
 }
 

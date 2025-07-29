@@ -295,6 +295,15 @@ public:
             case 32:
                 engine.ngOnOff = static_cast<uint32_t>(value);
             break;
+            case 33:
+                engine.IRmode = static_cast<uint32_t>(value);
+            break;
+            case 34:
+                engine.IRmix = value;
+            break;
+            case 35:
+                engine.MasterOutGain = value;
+            break;
             default:
             break;
         }

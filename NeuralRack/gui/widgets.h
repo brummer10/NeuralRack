@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define CONTROLS 27
+#define CONTROLS 30
 
 #define GUI_ELEMENTS 5
 

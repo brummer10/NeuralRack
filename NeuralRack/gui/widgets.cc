@@ -288,7 +288,7 @@ void draw_ir_elem(void *w_, void* user_data) {
     cairo_stroke (w->crb);
 
     round_area(w->crb, 10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
-         92 * w->scale.rcscale_x * w->app->hdpi, w->height -54 * w->scale.rcscale_y * w->app->hdpi,
+         122 * w->scale.rcscale_x * w->app->hdpi, w->height -54 * w->scale.rcscale_y * w->app->hdpi,
         w->width-102 * w->scale.rcscale_x * w->app->hdpi, w->height-21 * w->scale.rcscale_y * w->app->hdpi, 0.1);
     cairo_set_line_width(w->crb, 2);
     setAreaColour(w,  10 * w->scale.rcscale_x * w->app->hdpi, 10 * w->scale.rcscale_y * w->app->hdpi,
@@ -298,19 +298,19 @@ void draw_ir_elem(void *w_, void* user_data) {
     widget_set_scale(w);
 
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
-    round_rectangle(w->crb, 100 * w->app->hdpi, 20 * w->app->hdpi,
-                                            400 * w->app->hdpi, 30 * w->app->hdpi, 0.25);
+    round_rectangle(w->crb, 130 * w->app->hdpi, 20 * w->app->hdpi,
+                                            370 * w->app->hdpi, 30 * w->app->hdpi, 0.25);
     cairo_fill_preserve (w->crb);
-    boxShadowInset(w->crb,100 * w->app->hdpi,20 * w->app->hdpi,
-                                            400 * w->app->hdpi, 30 * w->app->hdpi, true);
+    boxShadowInset(w->crb,130 * w->app->hdpi,20 * w->app->hdpi,
+                                            370 * w->app->hdpi, 30 * w->app->hdpi, true);
     cairo_fill (w->crb);
 
     cairo_set_source_rgba(w->crb, 0.1, 0.1, 0.1, 1);
-    round_rectangle(w->crb, 100 * w->app->hdpi, 64 * w->app->hdpi,
-                                            400 * w->app->hdpi, 30 * w->app->hdpi, 0.25);
+    round_rectangle(w->crb, 130 * w->app->hdpi, 64 * w->app->hdpi,
+                                            370 * w->app->hdpi, 30 * w->app->hdpi, 0.25);
     cairo_fill_preserve (w->crb);
-    boxShadowInset(w->crb,100 * w->app->hdpi,64 * w->app->hdpi,
-                                            400 * w->app->hdpi, 30 * w->app->hdpi, true);
+    boxShadowInset(w->crb,130 * w->app->hdpi,64 * w->app->hdpi,
+                                            370 * w->app->hdpi, 30 * w->app->hdpi, true);
     cairo_fill (w->crb);
 
     use_text_color_scheme(w, NORMAL_);
@@ -323,8 +323,8 @@ void draw_ir_elem(void *w_, void* user_data) {
         cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir.filename));
         
-        if ((slen - 4) > 40) {
-            utf8crop(label,basename(ps->ir.filename), 40);
+        if ((slen - 4) > 36) {
+            utf8crop(label,basename(ps->ir.filename), 36);
             strcat(label,"...");
             tooltip_set_text(ps->ir.filebutton,basename(ps->ir.filename));
             ps->ir.filebutton->flags |= HAS_TOOLTIP;
@@ -336,7 +336,7 @@ void draw_ir_elem(void *w_, void* user_data) {
 
         cairo_text_extents(w->crb, label, &extents_f);
         double twf = extents_f.width/2.0;
-        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.50)-twf), 40 * w->app->hdpi );
+        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.54)-twf), 40 * w->app->hdpi );
         cairo_show_text(w->crb, label);
     }
     if (strlen(ps->ir1.filename)) {
@@ -346,8 +346,8 @@ void draw_ir_elem(void *w_, void* user_data) {
         cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir1.filename));
         
-        if ((slen - 4) > 40) {
-            utf8crop(label,basename(ps->ir1.filename), 40);
+        if ((slen - 4) > 36) {
+            utf8crop(label,basename(ps->ir1.filename), 36);
             strcat(label,"...");
             tooltip_set_text(ps->ir1.filebutton,basename(ps->ir1.filename));
             ps->ir1.filebutton->flags |= HAS_TOOLTIP;
@@ -359,7 +359,7 @@ void draw_ir_elem(void *w_, void* user_data) {
 
         cairo_text_extents(w->crb, label, &extents_f);
         double twf = extents_f.width/2.0;
-        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.50)-twf), 84 * w->app->hdpi );
+        cairo_move_to (w->crb, max(180 * w->app->hdpi,(w->scale.init_width*0.54)-twf), 84 * w->app->hdpi );
         cairo_show_text(w->crb, label);
     }
  
@@ -746,6 +746,100 @@ Widget_t* add_lv2_switch(Widget_t *w, Widget_t *p, int index, const char * label
     w->parent_struct = ui;
     w->data = index;
     w->func.expose_callback = draw_my_switch;
+    w->func.value_changed_callback = value_changed;
+    return w;
+}
+
+static void draw_my_vswitch(void *w_, void* user_data) {
+    Widget_t *wid = (Widget_t*)w_;
+    X11_UI* ui = (X11_UI*)wid->parent_struct;
+    const int x = wid->width * 0.2;
+    const int y = wid->height * 0.2;
+    const int w = wid->width * 0.5;
+    const int h = wid->height * 0.6;
+    const int state = (int)adj_get_state(wid->adj);
+
+    const int centerW = w * 0.5;
+    const int centerH = state ? centerW : h - centerW ;
+    const int offset = w * 0.2;
+
+    cairo_push_group (wid->crb);
+    
+    roundrec(wid->crb, x+1, y+1, w-2, h-2, centerW);
+    knobShadowOutset(wid->crb, w  , h, x, y);
+    cairo_stroke_preserve (wid->crb);
+
+    cairo_new_path(wid->crb);
+    roundrec(wid->crb, x+offset, y+offset, w - (offset * 2), h - (offset * 2), centerW-offset);
+    cairo_set_source_rgba(wid->crb, 0.05, 0.05, 0.05, 1);
+    cairo_fill_preserve(wid->crb);
+
+    cairo_set_source_rgba(wid->crb, 0.05, 0.05, 0.05, 1);
+    cairo_set_line_width(wid->crb,1);
+    cairo_stroke_preserve (wid->crb);
+
+    cairo_new_path(wid->crb);
+    cairo_arc(wid->crb,x+centerW, y+centerH, w/2.8, 0, 2 * M_PI );
+    use_bg_color_scheme(wid, PRELIGHT_);
+    cairo_fill_preserve(wid->crb);
+    knobShadowOutset(wid->crb, w * 0.5 , h, x+centerH - centerW, y);
+    cairo_set_source_rgba(wid->crb, 0.05, 0.05, 0.05, 1);
+    cairo_set_line_width(wid->crb,1);
+    cairo_stroke_preserve (wid->crb);
+
+    cairo_new_path(wid->crb);
+    cairo_arc(wid->crb,x+centerW, y+centerH, w/3.6, 0, 2 * M_PI );
+    if(wid->state==1) use_bg_color_scheme(wid, PRELIGHT_);
+    else use_bg_color_scheme(wid, NORMAL_);
+    cairo_fill_preserve(wid->crb);
+    knobShadowInset(wid->crb, w * 0.5 , h, x+centerH - centerW, y);
+    cairo_stroke (wid->crb);
+
+    /** show label below the switch**/
+    cairo_text_extents_t extents;
+    cairo_select_font_face (wid->crb, "Sans", CAIRO_FONT_SLANT_NORMAL,
+                               CAIRO_FONT_WEIGHT_BOLD);
+    if (!state) {
+        widget_hide(ui->widget[28]);
+        widget_hide(ui->widget[29]);
+        widget_show(ui->widget[3]);
+        widget_show(ui->widget[4]);        
+        use_fg_color_scheme(wid, INSENSITIVE_);
+    } else {
+        widget_hide(ui->widget[3]);
+        widget_hide(ui->widget[4]);
+        widget_show(ui->widget[28]);
+        widget_show(ui->widget[29]);        
+        use_fg_color_scheme(wid, PRELIGHT_);
+    }
+    cairo_set_font_size (wid->crb, wid->app->small_font/wid->scale.ascale);
+    cairo_text_extents(wid->crb,"Mix" , &extents);
+    cairo_move_to (wid->crb, (wid->width*0.45)-(extents.width*0.5), 4+(extents.height));
+    cairo_show_text(wid->crb, "Mix");
+    cairo_new_path (wid->crb);
+    /** show label above the switch**/
+    if (state) {
+        use_fg_color_scheme(wid, INSENSITIVE_);
+    } else {
+        use_fg_color_scheme(wid, PRELIGHT_);
+    }
+    cairo_set_font_size (wid->crb, wid->app->small_font/wid->scale.ascale);
+    cairo_text_extents(wid->crb,wid->label , &extents);
+    cairo_move_to (wid->crb, (wid->width*0.45)-(extents.width*0.5), wid->height -(extents.height*0.8));
+    cairo_show_text(wid->crb, wid->label);
+    cairo_new_path (wid->crb);
+
+    cairo_pop_group_to_source (wid->crb);
+    cairo_paint (wid->crb);
+}
+
+Widget_t* add_lv2_vswitch(Widget_t *w, Widget_t *p, int index, const char * label,
+                                X11_UI* ui, int x, int y, int width, int height) {
+    w = add_toggle_button(p, label, x, y, width, height);
+    w->parent_struct = ui;
+    w->data = index;
+    w->label = label;
+    w->func.expose_callback = draw_my_vswitch;
     w->func.value_changed_callback = value_changed;
     return w;
 }

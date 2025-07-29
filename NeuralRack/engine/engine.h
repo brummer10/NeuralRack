@@ -105,6 +105,8 @@ public:
     float                        outputGain1;
     float                        IRoutputGain;
     float                        IRoutputGain1;
+    float                        MasterOutGain;
+    float                        IRmix;
     float                        buffered;
     float                        latency;
     float                        XrunCounter;
@@ -119,6 +121,7 @@ public:
     uint32_t                     buffersize;
     uint32_t                     eqOnOff;
     uint32_t                     ngOnOff;
+    uint32_t                     IRmode;
     int                          phaseOffset;
 
     std::string                  model_file;
@@ -162,6 +165,8 @@ private:
     double                       fRec1[2];
     double                       fRec4[2];
     double                       fRec5[2];
+    double                       fRec6[2];
+    double                       fRec7[2];
 
     inline void processConv1();
     inline void processBuffer();
@@ -196,6 +201,7 @@ inline Engine::Engine() :
         bypass = 0;
         eqOnOff = 0;
         ngOnOff = 0;
+        IRmode = 0;
         normSlotA = 0;
         normSlotB = 0;
         inputGain = 0.0;
@@ -204,6 +210,8 @@ inline Engine::Engine() :
         outputGain1 = 0.0;
         IRoutputGain = 0.0;
         IRoutputGain1 = 0.0;
+        MasterOutGain = 0.0;
+        IRmix = 0.0;
         buffered = 0.0;
         latency = 0.0;
         XrunCounter = 0.0;
@@ -276,6 +284,8 @@ inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec1[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec4[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec5[l0] = 0.0;
+    for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec6[l0] = 0.0;
+    for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec7[l0] = 0.0;
 };
 
 void Engine::clean_up()
@@ -286,6 +296,8 @@ void Engine::clean_up()
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec1[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec4[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec5[l0] = 0.0;
+    for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec6[l0] = 0.0;
+    for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec7[l0] = 0.0;
     // delete the internal DSP mem
 }
 
@@ -534,23 +546,48 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         }
     }
 
+    if (IRmode == 0) { // Stereo mode
     // IRoutputGain 
-    for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
-        fRec1[0] = fSlow1 + 0.999 * fRec1[1];
-        output[i0] = bufa[i0] * fRec1[0];
-        fRec1[1] = fRec1[0];
+        for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
+            fRec1[0] = fSlow1 + 0.999 * fRec1[1];
+            output[i0] = bufa[i0] * fRec1[0];
+            fRec1[1] = fRec1[0];
+        }
+        // IRoutputGain1
+        for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
+            fRec5[0] = fSlow5 + 0.999 * fRec5[1];
+            output1[i0] = bufb[i0] * fRec5[0];
+            fRec5[1] = fRec5[0];
+        }
+    } else { // Mix mode
+        // mix output when needed
+        double fSlow7 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(MasterOutGain));
+        if ((!_execute.load(std::memory_order_acquire) &&
+                conv.is_runnable()) && conv1.is_runnable()) {
+            double fSlow6 = 0.0010000000000000009 * double(IRmix);
+            for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
+                fRec6[0] = fSlow6 + 0.999 * fRec6[1];
+                output[i0] = bufa[i0] * (1.0 - fRec6[0]) + bufb[i0] * fRec6[0];
+                fRec6[1] = fRec6[0];
+            }
+        } else if (!_execute.load(std::memory_order_acquire) && conv.is_runnable()) {
+            memcpy(output, bufa, n_samples*sizeof(float));
+        } else if (!_execute.load(std::memory_order_acquire) && conv1.is_runnable()) {
+            memcpy(output, bufb, n_samples*sizeof(float));
+        }
+        // MasterOutGain
+        for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
+            fRec7[0] = fSlow7 + 0.999 * fRec7[1];
+            output[i0] *= fRec7[0];
+            fRec7[1] = fRec7[0];
+        }
+        memcpy(output1, output, n_samples*sizeof(float));
     }
 
     // run noisegate
     if (ngOnOff)
         ngate->computeLeft(n_samples, output);
 
-    // IRoutputGain1
-    for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
-        fRec5[0] = fSlow5 + 0.999 * fRec5[1];
-        output1[i0] = bufb[i0] * fRec5[0];
-        fRec5[1] = fRec5[0];
-    }
 
     // run noisegate
     if (ngOnOff)
