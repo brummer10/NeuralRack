@@ -107,8 +107,8 @@ nrack:irfile1
    opts:supportedOption bufsz:maxBlockLength ;
    lv2:extensionData work:interface ,
                     state:interface ;
-   lv2:minorVersion 1 ;
-   lv2:microVersion 9 ;
+   lv2:minorVersion 2 ;
+   lv2:microVersion 0 ;
 
 guiext:ui <urn:brummer:neuralrack_ui> ;
 
