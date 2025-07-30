@@ -441,7 +441,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[14] = add_lv2_erase_button (ui->widget[14], ui->elem[2], 18, "", ui, 470, 68, 25, 25);
 
     // switch between Stereo and Mix output
-    ui->widget[27] = add_lv2_vswitch (ui->widget[27], ui->elem[2], 33, "Stereo", ui, 15, 18, 50, 80);
+    ui->widget[27] = add_lv2_vswitch (ui->widget[27], ui->elem[2], 33, "Stereo", ui, 20, 18, 35, 80);
 
 }
 

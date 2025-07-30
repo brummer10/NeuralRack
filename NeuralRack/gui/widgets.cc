@@ -753,15 +753,15 @@ Widget_t* add_lv2_switch(Widget_t *w, Widget_t *p, int index, const char * label
 static void draw_my_vswitch(void *w_, void* user_data) {
     Widget_t *wid = (Widget_t*)w_;
     X11_UI* ui = (X11_UI*)wid->parent_struct;
-    const int x = wid->width * 0.2;
+    const int x = wid->width * 0.125;
     const int y = wid->height * 0.2;
-    const int w = wid->width * 0.5;
+    const int w = wid->width * 0.75;
     const int h = wid->height * 0.6;
     const int state = (int)adj_get_state(wid->adj);
 
     const int centerW = w * 0.5;
     const int centerH = state ? centerW : h - centerW ;
-    const int offset = w * 0.2;
+    const int offset = w * 0.21;
 
     cairo_push_group (wid->crb);
     
@@ -814,7 +814,7 @@ static void draw_my_vswitch(void *w_, void* user_data) {
     }
     cairo_set_font_size (wid->crb, wid->app->small_font/wid->scale.ascale);
     cairo_text_extents(wid->crb,"Mix" , &extents);
-    cairo_move_to (wid->crb, (wid->width*0.45)-(extents.width*0.5), 4+(extents.height));
+    cairo_move_to (wid->crb, (wid->width*0.5)-(extents.width*0.5), 4+(extents.height));
     cairo_show_text(wid->crb, "Mix");
     cairo_new_path (wid->crb);
     /** show label above the switch**/
@@ -825,7 +825,7 @@ static void draw_my_vswitch(void *w_, void* user_data) {
     }
     cairo_set_font_size (wid->crb, wid->app->small_font/wid->scale.ascale);
     cairo_text_extents(wid->crb,wid->label , &extents);
-    cairo_move_to (wid->crb, (wid->width*0.45)-(extents.width*0.5), wid->height -(extents.height*0.8));
+    cairo_move_to (wid->crb, (wid->width*0.5)-(extents.width*0.5), wid->height -(extents.height*0.8));
     cairo_show_text(wid->crb, wid->label);
     cairo_new_path (wid->crb);
 
