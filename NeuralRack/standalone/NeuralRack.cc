@@ -20,7 +20,9 @@
 
 #include <locale.h>
 
+#if defined(HAVE_PA)
 #include "xpa.h"
+#endif
 #include "engine.h"
 #include "ParallelThread.h"
 #define STANDALONE
