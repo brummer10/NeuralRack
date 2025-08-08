@@ -116,9 +116,9 @@ private:
 	double fRec30[3];
 	double fRec29[3];
 	double fRec35[2];
-	bool flush_to_zero;
-
-
+#ifdef DEBUG
+	inline void check_state_f(double v);
+#endif
 public:
 	float  fVslider0;
 	float  fVslider1;
@@ -198,6 +198,15 @@ inline void Dsp::clear_state_internal()
 	for (int l40 = 0; l40 < 2; l40 = l40 + 1) fRec35[l40] = 0.0;
 }
 
+#ifdef DEBUG
+inline void Dsp::check_state_f(double v)
+{
+	if (std::fpclassify(v) == FP_SUBNORMAL) {
+		fprintf(stderr, "subnormal detected\n");
+	}
+}
+#endif
+
 inline void Dsp::init(uint32_t sample_rate)
 {
 	fSampleRate = sample_rate;
@@ -266,7 +275,6 @@ inline void Dsp::init(uint32_t sample_rate)
 	fConst62 = 1.0 - fConst37 / fConst21;
 	fConst63 = 1.0 / (fConst38 / fConst21 + 1.0);
 	fConst64 = 1.0 / (fConst29 * fConst33);
-	flush_to_zero = true;
 	clear_state_f();
 	clear_state_internal();
 }
@@ -279,10 +287,8 @@ inline void Dsp::compute(int count, float *input0, float *output0)
 	double fSlow3 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(fVslider3));
 	double fSlow4 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(fVslider4));
 	double fSlow5 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(fVslider5));
-	double sm = 0.0;
 	for (int i0 = 0; i0 < count; i0 = i0 + 1) {
 		double fTemp0 = double(input0[i0]);
-		sm += std::fabs(fTemp0);
 		fVec0[0] = fTemp0;
 		fRec9[0] = -(fConst36 * (fConst35 * fRec9[1] - (fTemp0 + fVec0[1])));
 		fRec8[0] = fRec9[0] - fConst34 * (fConst32 * fRec8[2] + fConst30 * fRec8[1]);
@@ -300,31 +306,31 @@ inline void Dsp::compute(int count, float *input0, float *output0)
 		fRec2[0] = fRec3[0] - fConst13 * (fConst11 * fRec2[2] + fConst9 * fRec2[1]);
 		double fTemp4 = fRec2[2] + fRec2[0] + 2.0 * fRec2[1];
 		fVec4[0] = fTemp4;
-		fRec1[0] = -(fConst49 * (fConst47 * fRec1[1] - fConst46 * (fTemp4 - fVec4[1])));
+		fRec1[0] = 1e-18 -(fConst49 * (fConst47 * fRec1[1] - fConst46 * (fTemp4 - fVec4[1]))) + 1e-18;
 		fRec0[0] = fRec1[0] - fConst6 * (fConst5 * fRec0[2] + fConst3 * fRec0[1]);
 		fRec10[0] = fSlow0 + 0.999 * fRec10[1];
 		fRec12[0] = -(fConst49 * (fConst47 * fRec12[1] - fConst13 * (fTemp4 + fVec4[1])));
 		fRec11[0] = fRec12[0] - fConst6 * (fConst5 * fRec11[2] + fConst3 * fRec11[1]);
 		fRec13[0] = fSlow1 + 0.999 * fRec13[1];
 		double fTemp5 = fConst3 * fRec14[1];
-		fRec16[0] = -(fConst45 * (fConst43 * fRec16[1] - fConst52 * (fTemp3 - fVec3[1])));
-		fRec15[0] = fRec16[0] - fConst13 * (fConst11 * fRec15[2] + fConst9 * fRec15[1]);
+		fRec16[0] = 1e-18 -(fConst45 * (fConst43 * fRec16[1] - fConst52 * (fTemp3 - fVec3[1]))) + 1e-18;
+		fRec15[0] = 1e-18 + fRec16[0] - fConst13 * (fConst11 * fRec15[2] + fConst9 * fRec15[1]) - 1e-18;
 		fRec14[0] = fConst53 * (fRec15[2] + (fRec15[0] - 2.0 * fRec15[1])) - fConst51 * (fConst50 * fRec14[2] + fTemp5);
 		fRec17[0] = fSlow2 + 0.999 * fRec17[1];
 		double fTemp6 = fConst3 * fRec18[1];
 		double fTemp7 = fConst9 * fRec19[1];
-		fRec21[0] = -(fConst42 * (fConst40 * fRec21[1] - fConst56 * (fTemp2 - fVec2[1])));
-		fRec20[0] = fRec21[0] - fConst20 * (fConst18 * fRec20[2] + fConst16 * fRec20[1]);
-		fRec19[0] = fConst57 * (fRec20[2] + (fRec20[0] - 2.0 * fRec20[1])) - fConst55 * (fConst54 * fRec19[2] + fTemp7);
+		fRec21[0] = 1e-18 -(fConst42 * (fConst40 * fRec21[1] - fConst56 * (fTemp2 - fVec2[1]))) + 1e-18;
+		fRec20[0] = 1e-18 + fRec21[0] - fConst20 * (fConst18 * fRec20[2] + fConst16 * fRec20[1]) - 1e-18;
+		fRec19[0] = 1e-18 + fConst57 * (fRec20[2] + (fRec20[0] - 2.0 * fRec20[1])) - fConst55 * (fConst54 * fRec19[2] + fTemp7) - 1e-18;
 		fRec18[0] = fRec19[2] + fConst55 * (fTemp7 + fConst54 * fRec19[0]) - fConst51 * (fConst50 * fRec18[2] + fTemp6);
 		fRec22[0] = fSlow3 + 0.999 * fRec22[1];
 		double fTemp8 = fConst3 * fRec23[1];
 		double fTemp9 = fConst9 * fRec24[1];
 		double fTemp10 = fConst16 * fRec25[1];
-		fRec27[0] = -(fConst39 * (fConst37 * fRec27[1] - fConst60 * (fTemp1 - fVec1[1])));
-		fRec26[0] = fRec27[0] - fConst27 * (fConst25 * fRec26[2] + fConst23 * fRec26[1]);
-		fRec25[0] = fConst61 * (fRec26[2] + (fRec26[0] - 2.0 * fRec26[1])) - fConst59 * (fConst58 * fRec25[2] + fTemp10);
-		fRec24[0] = fRec25[2] + fConst59 * (fTemp10 + fConst58 * fRec25[0]) - fConst55 * (fConst54 * fRec24[2] + fTemp9);
+		fRec27[0] = 1e-18 -(fConst39 * (fConst37 * fRec27[1] - fConst60 * (fTemp1 - fVec1[1]))) + 1e-18;
+		fRec26[0] = 1e-18 + fRec27[0] - fConst27 * (fConst25 * fRec26[2] + fConst23 * fRec26[1]) - 1e-18;
+		fRec25[0] = 1e-18 + fConst61 * (fRec26[2] + (fRec26[0] - 2.0 * fRec26[1])) - fConst59 * (fConst58 * fRec25[2] + fTemp10) - 1e-18;
+		fRec24[0] = 1e-18 + fRec25[2] + fConst59 * (fTemp10 + fConst58 * fRec25[0]) - fConst55 * (fConst54 * fRec24[2] + fTemp9) - 1e-18;
 		fRec23[0] = fRec24[2] + fConst55 * (fTemp9 + fConst54 * fRec24[0]) - fConst51 * (fConst50 * fRec23[2] + fTemp8);
 		fRec28[0] = fSlow4 + 0.999 * fRec28[1];
 		double fTemp11 = fConst3 * fRec29[1];
@@ -332,10 +338,10 @@ inline void Dsp::compute(int count, float *input0, float *output0)
 		double fTemp13 = fConst16 * fRec31[1];
 		double fTemp14 = fConst23 * fRec32[1];
 		fRec34[0] = -(fConst36 * (fConst35 * fRec34[1] - fConst31 * (fTemp0 - fVec0[1])));
-		fRec33[0] = fRec34[0] - fConst34 * (fConst32 * fRec33[2] + fConst30 * fRec33[1]);
-		fRec32[0] = fConst64 * (fRec33[2] + (fRec33[0] - 2.0 * fRec33[1])) - fConst63 * (fConst62 * fRec32[2] + fTemp14);
-		fRec31[0] = fRec32[2] + fConst63 * (fTemp14 + fConst62 * fRec32[0]) - fConst59 * (fConst58 * fRec31[2] + fTemp13);
-		fRec30[0] = fRec31[2] + fConst59 * (fTemp13 + fConst58 * fRec31[0]) - fConst55 * (fConst54 * fRec30[2] + fTemp12);
+		fRec33[0] = 1e-18 + fRec34[0] - fConst34 * (fConst32 * fRec33[2] + fConst30 * fRec33[1]) - 1e-18;
+		fRec32[0] = 1e-18 + fConst64 * (fRec33[2] + (fRec33[0] - 2.0 * fRec33[1])) - fConst63 * (fConst62 * fRec32[2] + fTemp14) - 1e-18;
+		fRec31[0] = 1e-18 + fRec32[2] + fConst63 * (fTemp14 + fConst62 * fRec32[0]) - fConst59 * (fConst58 * fRec31[2] + fTemp13) - 1e-18;
+		fRec30[0] = 1e-18 + fRec31[2] + fConst59 * (fTemp13 + fConst58 * fRec31[0]) - fConst55 * (fConst54 * fRec30[2] + fTemp12) - 1e-18;
 		fRec29[0] = fRec30[2] + fConst55 * (fTemp12 + fConst54 * fRec30[0]) - fConst51 * (fConst50 * fRec29[2] + fTemp11);
 		fRec35[0] = fSlow5 + 0.999 * fRec35[1];
 		output0[i0] = float(fRec35[0] * (fRec29[2] + fConst51 * (fTemp11 + fConst50 * fRec29[0])) + fRec28[0] * (fRec23[2] + fConst51 * (fTemp8 + fConst50 * fRec23[0])) + fRec22[0] * (fRec18[2] + fConst51 * (fTemp6 + fConst50 * fRec18[0])) + fRec17[0] * (fRec14[2] + fConst51 * (fTemp5 + fConst50 * fRec14[0])) + fConst6 * (fRec13[0] * (fRec11[2] + fRec11[0] + 2.0 * fRec11[1]) + fConst2 * fRec10[0] * (fRec0[0] + fRec0[2] - 2.0 * fRec0[1])));
@@ -401,14 +407,6 @@ inline void Dsp::compute(int count, float *input0, float *output0)
 		fRec29[1] = fRec29[0];
 		fRec35[1] = fRec35[0];
 	}
-    if (sm < 1e-18) {
-        if (flush_to_zero) {
-             clear_state_f();
-             flush_to_zero = false;
-         }
-    } else if (!flush_to_zero) {
-        flush_to_zero = true;
-    }
 }
 
 Dsp *plugin() {
