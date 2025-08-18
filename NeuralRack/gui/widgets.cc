@@ -729,10 +729,10 @@ static void draw_my_switch(void *w_, void* user_data) {
     cairo_text_extents_t extents;
     cairo_select_font_face (wid->crb, "Sans", CAIRO_FONT_SLANT_NORMAL,
                                CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_source_rgba(wid->crb, 0.4, 0.4, 0.4, 1);
+    cairo_set_source_rgba(wid->crb, 0.6, 0.6, 0.6, 1);
     cairo_set_font_size (wid->crb, wid->app->small_font/wid->scale.ascale);
     cairo_text_extents(wid->crb,wid->label , &extents);
-    cairo_move_to (wid->crb, (w*0.5)-(extents.width/2), h*2 -(extents.height*0.4));
+    cairo_move_to (wid->crb, (wid->width*0.5)-(extents.width*0.5), wid->height - 4 -(extents.height));
     cairo_show_text(wid->crb, wid->label);
     cairo_new_path (wid->crb);
 

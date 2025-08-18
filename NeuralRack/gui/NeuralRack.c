@@ -182,7 +182,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[16] = add_lv2_label (ui->widget[16], ui->win, 22, "Latency", ui, 90,  22, 130, 30);
     ui->widget[17] = add_lv2_label (ui->widget[17], ui->win, 23, "Xrun", ui, 410,  22, 100, 30);
 
-    ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "", ui, 505,  17, 50, 50);
+    ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "Enable", ui, 505,  12, 50, 50);
 
 // noisegate
     ui->elem[4] = create_widget(&ui->main, ui->win, 10, 60, 600, 70);
