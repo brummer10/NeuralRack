@@ -40,6 +40,7 @@ public:
 
     NeuralRack() : engine() {
         workToDo.store(false, std::memory_order_release);
+        presetToLoad.store(false, std::memory_order_release);
         processCounter = 0;
         settingsHaveChanged = false;
         disableAutoConnect = false;
@@ -54,6 +55,7 @@ public:
         ui->f_index = 0;
         title = "NeuralRack";
         currentPreset = "Default";
+        lPreset = "Default";
         #if defined(HAVE_PA)
         xpa = nullptr;
         #endif
@@ -358,8 +360,10 @@ public:
 
     // load a saved preset
     void loadPreset(int v) {
-        if ( v < PresetListNames.size())
-            readPreset(PresetListNames[v]);
+        if (v < PresetListNames.size() && v > -1) {
+            lPreset = PresetListNames[v];
+            presetToLoad.store(true, std::memory_order_release);
+        }
     }
 
     void readConfig(std::string name = "Default") {
@@ -467,12 +471,14 @@ private:
     bool                    settingsHaveChanged;
     bool                    disableAutoConnect;
     std::atomic<bool>       workToDo;
+    std::atomic<bool>       presetToLoad;
     std::string             configFile;
     std::string             presetFile;
     double                  s_time;
     std::vector<std::string> PresetListNames;
     std::string             title;
     std::string             currentPreset;
+    std::string             lPreset;
     std::vector<std::tuple< std::string, std::string> > connections;
 
     void createPresetMenu() {
@@ -900,6 +906,21 @@ private:
                 defined(__NetBSD__) || defined(__OpenBSD__)
             XFlush(ui->main.dpy);
             XUnlockDisplay(ui->main.dpy);
+            #endif
+        }
+        if (presetToLoad.load(std::memory_order_acquire)) {
+            presetToLoad.store(false, std::memory_order_release);
+            if (lPreset.compare(currentPreset) != 0) {
+                #if defined(__linux__) || defined(__FreeBSD__) || \
+                    defined(__NetBSD__) || defined(__OpenBSD__)
+                XLockDisplay(ui->main.dpy);
+                #endif
+                readPreset(lPreset);
+                #if defined(__linux__) || defined(__FreeBSD__) || \
+                    defined(__NetBSD__) || defined(__OpenBSD__)
+                XFlush(ui->main.dpy);
+                XUnlockDisplay(ui->main.dpy);
+            }
             #endif
         }
     }
