@@ -920,8 +920,8 @@ private:
                     defined(__NetBSD__) || defined(__OpenBSD__)
                 XFlush(ui->main.dpy);
                 XUnlockDisplay(ui->main.dpy);
+                #endif
             }
-            #endif
         }
     }
 
