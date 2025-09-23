@@ -96,7 +96,13 @@ public:
         ui->win->parent_struct = ui;
         ui->win->private_struct = (void*)this;
         ui->win->scale.gravity = NORTHWEST;
+        ui->win->func.key_press_callback = get_key;
         plugin_create_controller_widgets(ui,"standalone");
+
+        for (int i = 0; i < GUI_ELEMENTS; i++) {
+            ui->elem[i]->private_struct = (void*)this;
+            ui->elem[i]->func.key_press_callback = get_key;
+        }
 
         EngineMenu = menubar_add_menu(Menu, "Engine");
         #if defined(HAVE_PA)
@@ -490,6 +496,41 @@ private:
         }
         for (auto i = PresetListNames.begin(); i != PresetListNames.end(); i++) {
             menu_add_entry(PresetLoadMenu, (*i).c_str());
+        }
+    }
+
+    static void get_key(void *w_, void *key_, void *user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (!w) return;
+        NeuralRack *self = static_cast<NeuralRack*>(w->private_struct);
+        XKeyEvent *key = (XKeyEvent*)key_;
+        if (!key) return;
+        char buf[32];
+        memset(buf, 0, 32);
+        bool status = os_get_keyboard_input(w, key, buf, sizeof(buf) - 1);
+        // numpad key's didn't support shift mask so let's check them separate 
+        bool isNumPad = (key->keycode >= 79 && key->keycode <= 90) ? true : false;
+        // fprintf(stderr, "%d %s\n", key->keycode, buf);
+        if((status || isNumPad) && (key->state & ShiftMask || std::isdigit(buf[0]))){
+            int v = key->keycode;
+            // numpad keycode to num
+            if (v == 79) v = 7;
+            else if (v == 80) v = 8;
+            else if (v == 81) v = 9;
+            else if (v == 83) v = 4;
+            else if (v == 84) v = 5;
+            else if (v == 85) v = 6;
+            else if (v == 87) v = 1;
+            else if (v == 88) v = 2;
+            else if (v == 89) v = 3;
+            else if (v == 90) v = 0;
+            else v -= 9;
+            if (v > 9) v = 0;
+            if (key->state & ShiftMask) {
+                v += 10;
+            }
+            // fprintf(stderr, "load %i\n", v);
+            self->loadPreset(v);
         }
     }
 
