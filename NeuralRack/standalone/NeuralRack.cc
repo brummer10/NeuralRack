@@ -513,18 +513,21 @@ private:
         // fprintf(stderr, "%d %s\n", key->keycode, buf);
         if((status || isNumPad) && (key->state & ShiftMask || std::isdigit(buf[0]))){
             int v = key->keycode;
-            // numpad keycode to num
-            if (v == 79) v = 7;
-            else if (v == 80) v = 8;
-            else if (v == 81) v = 9;
-            else if (v == 83) v = 4;
-            else if (v == 84) v = 5;
-            else if (v == 85) v = 6;
-            else if (v == 87) v = 1;
-            else if (v == 88) v = 2;
-            else if (v == 89) v = 3;
-            else if (v == 90) v = 0;
-            else v -= 9;
+            // map numpad keycode to number
+            if (isNumPad) {
+                if (v == 79) v = 7;
+                else if (v == 80) v = 8;
+                else if (v == 81) v = 9;
+                else if (v == 83) v = 4;
+                else if (v == 84) v = 5;
+                else if (v == 85) v = 6;
+                else if (v == 87) v = 1;
+                else if (v == 88) v = 2;
+                else if (v == 89) v = 3;
+                else if (v == 90) v = 0;
+            } else {
+                v -= 9;
+            }
             if (v > 9) v = 0;
             if (key->state & ShiftMask) {
                 v += 10;

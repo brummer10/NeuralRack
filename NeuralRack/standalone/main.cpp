@@ -80,6 +80,21 @@ void signal_handler (int sig) {
 
 int main(int argc, char *argv[]){
 
+    if (argc > 1) {
+        std::string cmd = argv[1];
+        if ((cmd.compare("--help") == 0) || (cmd.compare("-h") == 0)) {
+            std::cout << "  _  _                   _ ___         _   " << std::endl;
+            std::cout << " | \\| |___ _  _ _ _ __ _| | _ \\__ _ __| |__" << std::endl;
+            std::cout << " | .` / -_) || | '_/ _` | |   / _` / _| / /" << std::endl;
+            std::cout << " |_|\\_\\___|\\_,_|_| \\__,_|_|_|_\\__,_\\__|_\\_\\" << std::endl;
+            std::cout << "                                           " << std::endl;
+            std::cout << " a Neural Model and Impulse Response File loader for Linux/Windows " << std::endl;
+            std::cout << " written by Hermann Meyer under the BSD 3-Clause License " << std::endl;
+            std::cout << " For help pleas visit: https://github.com/brummer10/NeuralRack/issues" << std::endl;
+            return 0;
+        }
+    }
+
     #if defined(__linux__) || defined(__FreeBSD__) || \
         defined(__NetBSD__) || defined(__OpenBSD__)
     #if defined(PAWPAW)
@@ -121,6 +136,10 @@ int main(int argc, char *argv[]){
     #else
     startJack();
     #endif
+
+    if (argc > 1) {
+        r->loadPreset((*argv[1]) -'0');
+    }
 
     main_run(r->getMain());
 
