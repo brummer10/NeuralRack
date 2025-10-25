@@ -119,9 +119,12 @@ public:
         PresetLoadMenu = menu_add_submenu(PresetMenu, "Load Preset");
         PresetLoadMenu->parent_struct = (void*)this;
         PresetLoadMenu->func.value_changed_callback = load_preset_callback;
-        Widget_t* SaveMenu = menu_add_entry(PresetMenu, "Save as ...");
+        Widget_t* SaveMenu = menu_add_entry(PresetMenu, "Save");
         SaveMenu->parent_struct = (void*)this;
-        SaveMenu->func.button_release_callback = save_preset_callback;
+        SaveMenu->func.button_release_callback = save_changed_preset_callback;
+        Widget_t* SaveAsMenu = menu_add_entry(PresetMenu, "Save as ...");
+        SaveAsMenu->parent_struct = (void*)this;
+        SaveAsMenu->func.button_release_callback = save_preset_callback;
         Widget_t* DeleteMenu = menu_add_entry(PresetMenu, "Delete Current");
         DeleteMenu->parent_struct = (void*)this;
         DeleteMenu->func.button_release_callback = delete_preset_callback;
@@ -683,6 +686,46 @@ private:
         }
     }
 
+    // replace a preset from the config file
+    void replacePreset(std::string LoadName) {
+        std::ifstream infile(presetFile);
+        std::ofstream outfile(presetFile + "temp");
+        bool save = true;
+        int remove = 0;
+        std::string line;
+        std::string key;
+        std::string value;
+        std::string ListName;
+        if (infile.is_open() && outfile.is_open()) {
+            while (std::getline(infile, line)) {
+                std::istringstream buf(line);
+                buf >> key;
+                buf >> value;
+                if (key.compare("[Preset]") == 0) {
+                    ListName = remove_sub(line, "[Preset] ");
+                }
+                if (ListName.compare(LoadName) == 0) {
+                    save = false;
+                    remove = 1;
+                } else {
+                    save = true;
+                }
+                if (save && remove) {
+                    writePreset(&outfile, currentPreset);
+                    remove = 0;
+                }
+                if (save) outfile << line<< std::endl;
+                key.clear();
+                value.clear();
+            }
+        infile.close();
+        outfile.close();
+        std::remove(presetFile.c_str());
+        std::rename((presetFile + "temp").c_str(), presetFile.c_str());
+        getPresets(ui);
+        }
+    }
+
     static void question_response(void *w_, void* user_data) {
         Widget_t *w = (Widget_t*)w_;
         if(user_data !=NULL) {
@@ -733,6 +776,14 @@ private:
         Widget_t *w = (Widget_t*)w_;
         NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
         self->save_as();
+    }
+
+    // save menu callback
+    static void save_changed_preset_callback(void* w_, void* item_, void* data_) {
+        Widget_t *w = (Widget_t*)w_;
+        NeuralRack *self = static_cast<NeuralRack*>(w->parent_struct);
+        if (self->currentPreset.empty()) self->save_as();
+        self->replacePreset(self->currentPreset);
     }
 
     // load a saved preset
