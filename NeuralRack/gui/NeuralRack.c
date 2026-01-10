@@ -133,6 +133,12 @@ static void file_menu_callback(void *w_, void* user_data) {
     file_load_response(m->filebutton, (void*)&ps->fname);
 }
 
+void setFrameCallbacks(Widget_t *frame) {
+    frame->func.button_press_callback = drag_frame;
+    frame->func.motion_callback = move_frame;;
+    frame->func.button_release_callback = drop_frame;
+}
+
 void plugin_set_window_size(int *w,int *h,const char * plugin_uri) {
     (*w) = 620; //set initial width of main window
     (*h) = 580; //set initial height of main window
@@ -184,6 +190,9 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
 
     ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "Enable", ui, 505,  12, 50, 50);
 
+    ui->glowY = 0;
+    vsg_init(&ui->g, ui->win, 10, 130, 0, &ui->glowY);
+
 // noisegate
     ui->elem[4] = create_widget(&ui->main, ui->win, 10, 60, 600, 70);
     ui->elem[4]->parent_struct = ui;
@@ -210,10 +219,11 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_widget_color(ui->widget[25], (Color_state)1, (Color_mod)0, 0.335, 0.315, 0.382, 1.0);
 
 // slot A Pedal Profile
-    ui->elem[0] = create_widget(&ui->main, ui->win, 10, 130, 600, 110);
+    vsg_add(&ui->g, ui->elem[0] = create_widget(&ui->main, ui->win, 10, 60, 600, 110));
     ui->elem[0]->parent_struct = ui;
     ui->elem[0]->label = "Pedal Profile";
     ui->elem[0]->data = 1;
+    //setFrameCallbacks(ui->elem[0]);
     // rack mount background colour
     set_widget_color(ui->elem[0], (Color_state)0, (Color_mod)1, 0.306, 0.510, 0.584, 1.0);
     // rack mount foreground colour 
@@ -254,9 +264,10 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[11] = add_lv2_erase_button (ui->widget[11], ui->elem[0], 15, "", ui, 390, 48, 25, 25);
 
 // EQ
-    ui->elem[3] = create_widget(&ui->main, ui->win, 10, 240, 600, 110);
+    vsg_add(&ui->g, ui->elem[3] = create_widget(&ui->main, ui->win, 10, 60, 600, 110));
     ui->elem[3]->parent_struct = ui;
     ui->elem[3]->label = "6 Band EQ";
+    setFrameCallbacks(ui->elem[3]);
     // rack mount background colour
     set_widget_color(ui->elem[3], (Color_state)0, (Color_mod)1, 0.569, 0.271, 0.310,1.0);
     // rack mount foreground colour 
@@ -322,10 +333,11 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_widget_color(ui->widget[23], (Color_state)1, (Color_mod)0, 0.694, 0.714, 0.737, 1.0);
 
 // sloat B Amp Profile
-    ui->elem[1] = create_widget(&ui->main, ui->win, 10, 350, 600, 110);
+    vsg_add(&ui->g, ui->elem[1] = create_widget(&ui->main, ui->win, 10, 60, 600, 110));
     ui->elem[1]->parent_struct = ui;
     ui->elem[1]->label = "Amp Profile";
     ui->elem[1]->data = 2;
+    //setFrameCallbacks(ui->elem[1]);
     // rack mount background colour
     set_widget_color(ui->elem[1], (Color_state)0, (Color_mod)1, 0.725, 0.592, 0.388, 1.0);
     // rack mount foreground colour 
@@ -465,6 +477,7 @@ void plugin_cleanup(X11_UI *ui) {
     free(ps->ir.filepicker);
     fp_free(ps->ir1.filepicker);
     free(ps->ir1.filepicker);
+    vsg_destroy(&ui->g);
     // clean up used sources when needed
 }
 

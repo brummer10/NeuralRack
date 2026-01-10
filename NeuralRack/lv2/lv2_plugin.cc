@@ -32,6 +32,7 @@ static inline void map_x11ui_uris(LV2_URID_Map* map, X11LV2URIs* uris) {
     uris->neural_model1 = map->map(map->handle, XLV2__neural_model1);
     uris->conv_ir_file = map->map(map->handle, XLV2__IRFILE);
     uris->conv_ir_file1 = map->map(map->handle, XLV2__IRFILE1);
+    uris->eq_pos = map->map(map->handle, XLV2__EQPOS);
     uris->atom_Object = map->map(map->handle, LV2_ATOM__Object);
     uris->atom_Int = map->map(map->handle, LV2_ATOM__Int);
     uris->atom_Float = map->map(map->handle, LV2_ATOM__Float);
@@ -48,6 +49,16 @@ static inline void map_x11ui_uris(LV2_URID_Map* map, X11LV2URIs* uris) {
     uris->patch_value = map->map(map->handle, LV2_PATCH__value);
 }
 
+void setEQPos(X11_UI* ui, int pos) {
+    int oldPos = vsg_findDragIndex(&ui->g, ui->elem[3]);
+    if (oldPos != pos) {
+        ui->g.dragWidget = ui->elem[3];
+        ui->g.oldIndex = oldPos;
+        ui->g.newIndex = pos;
+        vsg_endDrag(&ui->g);
+    }
+}
+
 static inline LV2_Atom* write_set_file(const LV2_URID urid, LV2_Atom_Forge* forge,
                 const X11LV2URIs* uris, const char* filename) {
     LV2_Atom_Forge_Frame frame;
@@ -57,6 +68,19 @@ static inline LV2_Atom* write_set_file(const LV2_URID urid, LV2_Atom_Forge* forg
     lv2_atom_forge_urid(forge, urid);
     lv2_atom_forge_key(forge, uris->patch_value);
     lv2_atom_forge_path(forge, filename, strlen(filename) + 1);
+    lv2_atom_forge_pop(forge, &frame);
+    return set;
+}
+
+static inline LV2_Atom* write_set_eqpos(const LV2_URID urid, LV2_Atom_Forge* forge,
+                const X11LV2URIs* uris, int value) {
+    LV2_Atom_Forge_Frame frame;
+    LV2_Atom* set = (LV2_Atom*)lv2_atom_forge_object(
+                        forge, &frame, 1, uris->patch_Set);
+    lv2_atom_forge_key(forge, uris->patch_property);
+    lv2_atom_forge_urid(forge, urid);
+    lv2_atom_forge_key(forge, uris->patch_value);
+    lv2_atom_forge_int(forge, value);
     lv2_atom_forge_pop(forge, &frame);
     return set;
 }
@@ -196,6 +220,19 @@ void plugin_port_event(LV2UI_Handle handle, uint32_t port_index,
                 const LV2_Atom* file_uri = read_set_file(uris, ui, &m, obj);
                 if (file_uri && m) {
                     get_file(file_uri, ui, m);
+                } else {
+                    const LV2_Atom* property = NULL;
+                    lv2_atom_object_get(obj, ui->itf.uris.patch_property, &property, 0);
+                    if (property && (property->type == ui->itf.uris.atom_URID)) {
+                        if (((LV2_Atom_URID*)property)->body == ui->itf.uris.eq_pos) {
+                            const LV2_Atom* value = NULL;
+                            lv2_atom_object_get(obj, ui->itf.uris.patch_value, &value, 0);
+                            if (value && (value->type == ui->itf.uris.atom_Int)) {
+                                int* eqpos = (int*)LV2_ATOM_BODY(value);
+                               setEQPos(ui, (*eqpos));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -234,6 +271,8 @@ static LV2UI_Handle instantiate(const LV2UI_Descriptor * descriptor,
     ui->setVerbose = false;
     ui->uiSampleRate = 0;
     ui->f_index = 0;
+    ui->glowY = 0;
+    ui->eqpos = 1;
 
     int i = 0;
     for(;i<CONTROLS;i++)
@@ -379,6 +418,18 @@ static int ui_idle(LV2UI_Handle handle) {
             os_move_window(ui->main.dpy, ui->widget[i], ui->widget[i]->x, ui->widget[i]->y);
         }
         ui->need_resize = 0;
+    }
+    vsg_update(&ui->g, 1.0f / 60.0f);
+    if(ui->g.newIndex != ui->eqpos) {
+        ui->eqpos = ui->g.newIndex;
+        uint8_t obj_buf[OBJ_BUF_SIZE];
+        lv2_atom_forge_set_buffer(&ui->itf.forge, obj_buf, OBJ_BUF_SIZE);
+        LV2_Atom* msg = (LV2_Atom*)write_set_eqpos(ui->itf.uris.eq_pos, &ui->itf.forge,
+                            &ui->itf.uris, ui->eqpos);
+        ui->itf.write_function(ui->itf.controller, 5, lv2_atom_total_size(msg),
+                           ui->itf.uris.atom_eventTransfer, msg);
+
+        //engine.setEQPos(ui->g.newIndex);
     }
     // Xputty event loop setup to run one cycle when called
     run_embedded(&ui->main);

@@ -119,6 +119,7 @@ public:
     uint32_t                     s_rate;
     uint32_t                     bufsize;
     uint32_t                     buffersize;
+    uint32_t                     eqPos;
     uint32_t                     eqOnOff;
     uint32_t                     ngOnOff;
     uint32_t                     IRmode;
@@ -142,6 +143,7 @@ public:
     inline ~Engine();
 
     inline void init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_);
+    inline void setEQPos(uint32_t _eqPos);
     inline void clean_up();
     inline void do_work_mono();
     inline void process(uint32_t n_samples, float* output, float* output1);
@@ -171,6 +173,7 @@ private:
     inline void processConv1();
     inline void processBuffer();
     inline void processSlotB(float* output);
+    inline void processEQ(uint32_t n_samples, float* output);
     inline void processBufferedSlotB();
     inline void processDsp(uint32_t n_samples, float* output, float* output1);
 
@@ -199,6 +202,7 @@ inline Engine::Engine() :
         buffersize = 0;
         phaseOffset = 0;
         bypass = 0;
+        eqPos = 1;
         eqOnOff = 0;
         ngOnOff = 0;
         IRmode = 0;
@@ -299,6 +303,11 @@ void Engine::clean_up()
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec6[l0] = 0.0;
     for (int l0 = 0; l0 < 2; l0 = l0 + 1) fRec7[l0] = 0.0;
     // delete the internal DSP mem
+}
+
+inline void Engine::setEQPos(uint32_t _eqPos) {
+    peq->clear_state_f();
+    eqPos = _eqPos;
 }
 
 inline void Engine::setModel(NeuralModelLoader *slot,
@@ -428,6 +437,10 @@ inline void Engine::processBufferedSlotB() {
     processSlotB(bufferoutput0);
 }
 
+inline void Engine::processEQ(uint32_t n_samples, float* output) {
+    peq->compute(n_samples, output, output);
+}
+
 inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1)
 {
     if(n_samples<1) return;
@@ -448,6 +461,9 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     // run noisegate
     if (ngOnOff)
         ngate->compute(n_samples, output);
+
+    // run eq
+    if (eqOnOff && eqPos == 0) processEQ(n_samples, output);
 
     // process input volume slot A
     if (_neuralA.load(std::memory_order_acquire)) {
@@ -474,8 +490,7 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     }
 
     // run eq
-    if (eqOnOff)
-        peq->compute(n_samples, output, output);
+    if (eqOnOff && eqPos == 1) processEQ(n_samples, output);
 
     if ((buffered == 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
         // avoid buffer overflow on frame size change
@@ -512,6 +527,9 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         processSlotB(output);
         if (!buffered) latency = 0.0;
     }
+
+    // run eq
+    if (eqOnOff && eqPos == 2) processEQ(n_samples, output);
 
     // run dcblocker
     dcb->compute(n_samples, output, output);

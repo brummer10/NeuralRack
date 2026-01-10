@@ -43,6 +43,7 @@ public:
         ui->setVerbose = false;
         ui->uiSampleRate = 0;
         ui->f_index = 0;
+        ui->glowY = 0;
         title = "NeuralRack";
         firstLoop = true;
         p = 0;
@@ -195,7 +196,10 @@ public:
 
     // check output ports from engine
     void checkEngine() {
-        
+
+        vsg_update(&ui->g, 1.0f / 60.0f);        
+        if(ui->g.newIndex != engine.eqPos) engine.setEQPos(ui->g.newIndex);
+
         if (workToDo.load(std::memory_order_acquire)) {
             if (engine.xrworker.getProcess()) {
                 workToDo.store(false, std::memory_order_release);
@@ -479,6 +483,15 @@ public:
         workToDo.store(true, std::memory_order_release);
     }
 
+    void setEQPos(int pos) {
+        int oldPos = vsg_findDragIndex(&ui->g, ui->elem[3]);
+        if (oldPos != pos) {
+            ui->g.dragWidget = ui->elem[3];
+            ui->g.oldIndex = oldPos;
+            ui->g.newIndex = pos;
+            vsg_endDrag(&ui->g);
+        }
+    }
 
     float check_stod (const std::string& str) {
         char* point = localeconv()->decimal_point;
@@ -572,6 +585,9 @@ public:
             } else if (key.compare("[IrFile1]") == 0) {
                 engine.ir_file1 = remove_sub(line, "[IrFile1] ");
                 engine._cd.fetch_add(2, std::memory_order_relaxed);
+            } else if (key.compare("[EQPos]") == 0) {
+                engine.eqPos = check_stod(remove_sub(line, "[EQPos] "));
+                setEQPos(engine.eqPos);
             }
             key.clear();
             value.clear();
@@ -621,6 +637,7 @@ public:
         buffer << "[Model1] " << engine.model_file1 << "|";
         buffer << "[IrFile] " << engine.ir_file << "|";
         buffer << "[IrFile1] " << engine.ir_file1 << "|";
+        buffer << "[EQPos] " << engine.eqPos << "|";
         (*state) = buffer.str();
     }
 

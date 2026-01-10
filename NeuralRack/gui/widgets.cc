@@ -372,6 +372,7 @@ void draw_ir_elem(void *w_, void* user_data) {
 // draw the window
 static void draw_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
+    X11_UI* ui = (X11_UI*)w->parent_struct;
     cairo_push_group (w->crb);
 
     cairo_set_source_rgba(w->crb, 0.083, 0.083, 0.083, 1);    
@@ -415,6 +416,15 @@ static void draw_window(void *w_, void* user_data) {
     cairo_line_to (w->crb, 600 * w->app->hdpi, 53 * w->app->hdpi);
     cairo_set_source_rgba(w->crb, 0.01, 0.01, 0.01, 1);
     cairo_stroke (w->crb);
+
+    if (ui->glowY > 0) {
+        cairo_set_line_cap (w->crb, CAIRO_LINE_CAP_ROUND);
+        cairo_set_source_rgba(w->crb, 0.55, 0.65, 0.55, 0.4);
+        cairo_set_line_width(w->crb, 5);
+        cairo_move_to(w->crb, 20, ui->glowY);
+        cairo_line_to(w->crb, 600, ui->glowY);
+        cairo_stroke(w->crb);
+    }
 
     widget_reset_scale(w);
     cairo_new_path (w->crb);
@@ -1351,4 +1361,26 @@ Widget_t* add_lv2_erase_button(Widget_t *w, Widget_t *p, int index, const char *
     w->func.expose_callback = draw_i_button;
     w->func.value_changed_callback = value_changed;
     return w;
+}
+
+static void drop_frame(void *w_, void* xbutton_, void* user_data) {
+    Widget_t *w = (Widget_t*)w_;
+    X11_UI* ui = (X11_UI*)w->parent_struct;
+    vsg_endDrag(&ui->g);
+    expose_widget(w);
+}
+
+static void drag_frame(void *w_, void* xbutton_, void* user_data) {
+    Widget_t *w = (Widget_t*)w_;
+    XButtonEvent *xbutton = (XButtonEvent*)xbutton_;
+    X11_UI* ui = (X11_UI*)w->parent_struct;
+    vsg_beginDrag(&ui->g, w, xbutton->y_root);
+}
+
+// move  following the mouse pointer
+static void move_frame(void *w_, void *xmotion_, void* user_data) {
+    Widget_t *w = (Widget_t*)w_;
+    XMotionEvent *xmotion = (XMotionEvent*)xmotion_;
+    X11_UI* ui = (X11_UI*)w->parent_struct;
+    vsg_dragMove(&ui->g, xmotion->y_root);
 }

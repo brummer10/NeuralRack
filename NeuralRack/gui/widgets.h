@@ -10,6 +10,7 @@
 // xwidgets.h includes xputty.h and all defined widgets from Xputty
 #include "xwidgets.h"
 #include "xfile-dialog.h"
+#include "SizeGroup.h"
 
 #pragma once
 
@@ -60,6 +61,9 @@ typedef struct {
     int uiSampleRate;
     bool setVerbose;
     Interface itf;
+    VerticalSizeGroup g;
+    int glowY;
+    uint32_t eqpos;
 } X11_UI;
 
 // set the plugin initial window size

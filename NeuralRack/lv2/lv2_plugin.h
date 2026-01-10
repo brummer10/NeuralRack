@@ -45,6 +45,7 @@
 #define XLV2__neural_model1 "urn:brummer:neuralrack#Neural_Model1"
 #define XLV2__IRFILE "urn:brummer:neuralrack#irfile"
 #define XLV2__IRFILE1 "urn:brummer:neuralrack#irfile1"
+#define XLV2__EQPOS "urn:brummer:neuralrack#eqpos"
 
 #define OBJ_BUF_SIZE 1024
 
@@ -54,6 +55,7 @@ typedef struct {
     LV2_URID neural_model1;
     LV2_URID conv_ir_file;
     LV2_URID conv_ir_file1;
+    LV2_URID eq_pos;
     LV2_URID atom_Object;
     LV2_URID atom_Int;
     LV2_URID atom_Float;

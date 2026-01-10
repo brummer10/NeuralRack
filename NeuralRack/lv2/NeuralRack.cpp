@@ -94,11 +94,17 @@ private:
     inline void deactivate_f();
 
 public:
+    inline LV2_Atom* write_set_eqpos(LV2_Atom_Forge* forge,
+                const LV2_URID urid, int value);
     inline LV2_Atom* write_set_file(LV2_Atom_Forge* forge,
                     const LV2_URID xlv2_model, const char* filename);
     inline const LV2_Atom* read_set_file(const LV2_Atom_Object* obj);
+    inline void storeValue(LV2_State_Store_Function store, 
+            LV2_State_Handle handle,const LV2_URID urid, float value);
     inline void storeFile(LV2_State_Store_Function store,
             LV2_State_Handle handle, const LV2_URID urid, const std::string file);
+    const float* restoreValue(LV2_State_Retrieve_Function retrieve,
+            LV2_State_Handle handle,LV2_URID urid);
     inline bool restoreFile(LV2_State_Retrieve_Function retrieve,
                 LV2_State_Handle handle, const LV2_URID urid, std::string *file);
     // LV2 Descriptor
@@ -335,6 +341,21 @@ void Xneuralrack::deactivate_f()
     // delete the internal DSP mem
 }
 
+// prepare atom message with int value
+inline LV2_Atom* Xneuralrack::write_set_eqpos(LV2_Atom_Forge* forge,
+                                    const LV2_URID urid, int value) {
+    LV2_Atom_Forge_Frame frame;
+    lv2_atom_forge_frame_time(forge, 0);
+    LV2_Atom* set = (LV2_Atom*)lv2_atom_forge_object(
+                        forge, &frame, 1, patch_Set);
+    lv2_atom_forge_key(forge, patch_property);
+    lv2_atom_forge_urid(forge, urid);
+    lv2_atom_forge_key(forge, patch_value);
+    lv2_atom_forge_int(forge, value);
+    lv2_atom_forge_pop(forge, &frame);
+    return set;
+}
+
 // prepare atom message with file path
 inline LV2_Atom* Xneuralrack::write_set_file(LV2_Atom_Forge* forge,
                     const LV2_URID xlv2_model, const char* filename) {
@@ -417,6 +438,20 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
                     else if (engine._cd.load(std::memory_order_acquire) == 2)
                         engine.ir_file1 = (const char*)(file_path+1);
                     if (!doit) doit = true;
+                } else {
+                    const LV2_Atom* property = NULL;
+                    lv2_atom_object_get(obj, patch_property, &property, 0);
+
+                    if (property && (property->type == atom_URID)) {
+                        if (((LV2_Atom_URID*)property)->body == xlv2_eq_pos) {
+                            const LV2_Atom* value = NULL;
+                            lv2_atom_object_get(obj, patch_value, &value, 0);
+                            if (value && (value->type == atom_Int)) {
+                                int* eqpos = (int*)LV2_ATOM_BODY(value);
+                                engine.setEQPos((*eqpos));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -512,6 +547,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
         write_set_file(&forge, xlv2_ir_file1, engine.ir_file1.data());
         engine._ab.store(0, std::memory_order_release);
         engine._cd.store(0, std::memory_order_release);
+        write_set_eqpos(&forge, xlv2_eq_pos, engine.eqPos);
     }
 }
 
@@ -548,6 +584,14 @@ void Xneuralrack::connect_all__ports(uint32_t port, void* data)
     connect_(port,data);
 }
 
+
+void Xneuralrack::storeValue(LV2_State_Store_Function store, 
+            LV2_State_Handle handle,const LV2_URID urid, float value) {
+    const int rw = value;
+    store(handle,urid,&rw, sizeof(rw),
+          atom_Int, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+}
+
 // write file path to state
 inline void Xneuralrack::storeFile(LV2_State_Store_Function store,
             LV2_State_Handle handle, const LV2_URID urid, const std::string file) {
@@ -555,6 +599,19 @@ inline void Xneuralrack::storeFile(LV2_State_Store_Function store,
     store(handle, urid, file.data(), strlen(file.data()) + 1,
           atom_String, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 }
+
+
+const float* Xneuralrack::restoreValue(LV2_State_Retrieve_Function retrieve,
+            LV2_State_Handle handle,LV2_URID urid) {
+    size_t      size;
+    uint32_t    type;
+    uint32_t    fflags;
+
+    const void* value = retrieve(handle, urid, &size, &type, &fflags);
+    if (value) return  ((const float *)value);
+    return NULL;
+}
+
 
 // retrieve file path from state
 inline bool Xneuralrack::restoreFile(LV2_State_Retrieve_Function retrieve,
@@ -584,6 +641,7 @@ LV2_State_Status Xneuralrack::save_state(LV2_Handle instance,
     self->storeFile(store, handle, self->xlv2_model_file1, self->engine.model_file1);
     self->storeFile(store, handle, self->xlv2_ir_file, self->engine.ir_file);
     self->storeFile(store, handle, self->xlv2_ir_file1, self->engine.ir_file1);
+    self->storeValue(store, handle, self->xlv2_eq_pos, self->engine.eqPos);
 
     return LV2_STATE_SUCCESS;
 }
@@ -603,6 +661,15 @@ LV2_State_Status Xneuralrack::restore_state(LV2_Handle instance,
         self->engine._cd.fetch_add(1, std::memory_order_relaxed);
     if (self->restoreFile(retrieve, handle, self->xlv2_ir_file1, &self->engine.ir_file1))
         self->engine._cd.fetch_add(2, std::memory_order_relaxed);
+
+    float* value = NULL;
+    value = (float *)self->restoreValue(retrieve,handle, self->xlv2_eq_pos);
+    if (value) {
+        if (*((int *)value) != self->engine.eqPos) {
+            self->engine.eqPos =  *((int *)value);
+            self->write_set_eqpos(&self->forge, self->xlv2_eq_pos, self->engine.eqPos);
+        }
+    }
 
     self-> _restore.store(true, std::memory_order_release);
     return LV2_STATE_SUCCESS;

@@ -30,6 +30,7 @@
 #define XLV2__MODELFILE1 "urn:brummer:neuralrack#Neural_Model1"
 #define XLV2__IRFILE "urn:brummer:neuralrack#irfile"
 #define XLV2__IRFILE1 "urn:brummer:neuralrack#irfile1"
+#define XLV2__EQPOS "urn:brummer:neuralrack#eqpos"
 
 #define XLV2__GUI "urn:brummer:neuralrack#gui"
 
@@ -57,6 +58,7 @@ public:
     LV2_URID                     xlv2_model_file1;
     LV2_URID                     xlv2_ir_file;
     LV2_URID                     xlv2_ir_file1;
+    LV2_URID                     xlv2_eq_pos;
     LV2_URID                     xlv2_gui;
     LV2_URID                     atom_Object;
     LV2_URID                     atom_Int;
@@ -78,6 +80,7 @@ public:
         xlv2_model_file1 =      map->map(map->handle, XLV2__MODELFILE1);
         xlv2_ir_file =          map->map(map->handle, XLV2__IRFILE);
         xlv2_ir_file1 =         map->map(map->handle, XLV2__IRFILE1);
+        xlv2_eq_pos =           map->map(map->handle, XLV2__EQPOS);
         xlv2_gui =              map->map(map->handle, XLV2__GUI);
         atom_Object =           map->map(map->handle, LV2_ATOM__Object);
         atom_Int =              map->map(map->handle, LV2_ATOM__Int);
