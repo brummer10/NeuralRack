@@ -7,6 +7,11 @@
  * Copyright (C) 2026 brummer <brummer@web.de>
  */
 
+/****************************************************************
+        SizeGroup.h - a vertical animated size group 
+                      with drag and drop support for libxputty
+****************************************************************/
+
 
 #pragma once
 #include "xwidgets.h"
@@ -73,16 +78,18 @@ static inline void vsg_destroy(VerticalSizeGroup* g) {
 
 static inline void vsg_init(VerticalSizeGroup* g,
     Widget_t* parent,int sx,int sy,int spacingY,int* glowY) {
-    memset(g,0,sizeof(*g));
-    g->parent = parent;
-    g->startX = sx;
-    g->startY = sy;
-    g->spacingY = spacingY;
-    g->glowY = glowY;
-    g->animateOnAdd = 1;
-    g->newIndex = 1;
+    memset(g,0,sizeof(*g));     // clear the SizeGroup
+    g->parent = parent;         // the parent window
+    g->startX = sx;             // the upper left corner
+    g->startY = sy;             // the upper vertical point
+    g->spacingY = spacingY;     // spacing behind elements
+    g->glowY = glowY;           // drop indicator
+    g->animateOnAdd = 1;        // switch animation on/off
+    g->newIndex = 1;            // the drop index 
+    g->wmy = sy;                // the current position from a dragged window 
 }
 
+// call from a GUI timeout loop (60fps)
 static inline void vsg_update(VerticalSizeGroup* g,float dt) {
     if (!g->tweensActive) return;
     Display* dpy = g->parent->app->dpy;
@@ -92,7 +99,7 @@ static inline void vsg_update(VerticalSizeGroup* g,float dt) {
         VSTween* t = &g->tweens[i];
         if (t->t>=1) continue;
 
-        t->t += dt*12.0f;
+        t->t += dt/0.083335f; // 60fps
         if (t->t>1) t->t=1;
 
         float s = t->t*t->t*(3-2*t->t);
@@ -103,6 +110,7 @@ static inline void vsg_update(VerticalSizeGroup* g,float dt) {
     g->tweensActive = active;
 }
 
+// prepare entries for animation/ positioning 
 static inline void vsg_relayout(VerticalSizeGroup* g) {
     Display* dpy = g->parent->app->dpy;
     g->tweenCount = 0;
@@ -138,6 +146,7 @@ static inline void vsg_relayout(VerticalSizeGroup* g) {
     }
 }
 
+// add element to the size-group 
 static inline void vsg_add(VerticalSizeGroup* g,Widget_t* w) {
     if (g->entryCount+1 > g->entryCap) {
         g->entryCap = g->entryCap ? g->entryCap*2 : 8;
@@ -148,8 +157,8 @@ static inline void vsg_add(VerticalSizeGroup* g,Widget_t* w) {
     vsg_relayout(g);
 }
 
+// find index of a element in the size-group
 static inline int vsg_findDragIndex(VerticalSizeGroup* g, Widget_t* w) {
-    /* find current index */
     for (int i=0;i<g->entryCount;i++) {
         if (g->entries[i] == w) {
             g->oldIndex = i;
@@ -159,6 +168,7 @@ static inline int vsg_findDragIndex(VerticalSizeGroup* g, Widget_t* w) {
     return -1;
 }
 
+// find new index of a moved element
 static inline int vsg_findDropIndex(VerticalSizeGroup* g) {
     int best = 0;
     int bestDist = 1e9;
@@ -180,12 +190,14 @@ static inline int vsg_findDropIndex(VerticalSizeGroup* g) {
     return best;
 }
 
+// register a element for dragging
 static inline void vsg_beginDrag(VerticalSizeGroup* g,Widget_t* w,int my) {
     g->dragWidget = w;
     g->dragOffsetY = my;
     os_raise_widget(w);
 }
 
+// while move the element
 static inline void vsg_dragMove(VerticalSizeGroup* g,int my) {
     if (!g->dragWidget) return;
 
@@ -195,7 +207,7 @@ static inline void vsg_dragMove(VerticalSizeGroup* g,int my) {
                    g->dragWidget->scale.init_x,
                    g->wmy);
 
-    /* find current index */
+    // find current index
     for (int i=0;i<g->entryCount;i++) {
         if (g->entries[i] == g->dragWidget) {
             g->oldIndex = i;
@@ -208,7 +220,7 @@ static inline void vsg_dragMove(VerticalSizeGroup* g,int my) {
     expose_widget(g->parent);
 }
 
-
+// insert dropped element in size-group at new index
 static inline void vsg_endDrag(VerticalSizeGroup* g) {
     if (!g->dragWidget) return;
 
@@ -230,5 +242,4 @@ static inline void vsg_endDrag(VerticalSizeGroup* g) {
     g->dragWidget = NULL;
     *g->glowY = -1;
     expose_widget(g->parent);
-    //fprintf(stderr, "newIndex %i\n", g->newIndex);
 }

@@ -138,6 +138,7 @@ public:
     std::atomic<bool>            bufferIsInit;
     std::atomic<int>             _ab;
     std::atomic<int>             _cd;
+    std::atomic<int>             _eqPos;
 
     inline Engine();
     inline ~Engine();
@@ -231,6 +232,7 @@ inline Engine::Engine() :
 
         _neuralA.store(false, std::memory_order_release);
         _neuralB.store(false, std::memory_order_release);
+        _eqPos.store(1, std::memory_order_release);
 };
 
 inline Engine::~Engine(){
@@ -305,9 +307,10 @@ void Engine::clean_up()
     // delete the internal DSP mem
 }
 
-inline void Engine::setEQPos(uint32_t _eqPos) {
+inline void Engine::setEQPos(uint32_t eqPosition) {
     peq->clear_state_f();
-    eqPos = _eqPos;
+    eqPos = eqPosition;
+    _eqPos.store(eqPos, std::memory_order_release);
 }
 
 inline void Engine::setModel(NeuralModelLoader *slot,
@@ -463,7 +466,8 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         ngate->compute(n_samples, output);
 
     // run eq
-    if (eqOnOff && eqPos == 0) processEQ(n_samples, output);
+    if (eqOnOff && (_eqPos.load(std::memory_order_acquire) == 0))
+        processEQ(n_samples, output);
 
     // process input volume slot A
     if (_neuralA.load(std::memory_order_acquire)) {
@@ -490,7 +494,8 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     }
 
     // run eq
-    if (eqOnOff && eqPos == 1) processEQ(n_samples, output);
+    if (eqOnOff && (_eqPos.load(std::memory_order_acquire) == 1)) 
+        processEQ(n_samples, output);
 
     if ((buffered == 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
         // avoid buffer overflow on frame size change
@@ -529,7 +534,8 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     }
 
     // run eq
-    if (eqOnOff && eqPos == 2) processEQ(n_samples, output);
+    if (eqOnOff && (_eqPos.load(std::memory_order_acquire) == 2))
+        processEQ(n_samples, output);
 
     // run dcblocker
     dcb->compute(n_samples, output, output);

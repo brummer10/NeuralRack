@@ -248,7 +248,7 @@ ifeq (,$(filter vst2,$(MAKECMDGOALS)))
 	INFOSTRING += support
     $(info $(yellow) INFO: $(reset)Stand-alone   $(blue)$(INFOSTRING)$(reset))
     else
-    $(info $(yellow) INFO: $(reset)Stand-alone   $(red)not supported$(reset))
+    $(info $(yellow) INFO: $(reset)Stand-alone   $(red)skipped - libjack-dev and portaudio19-dev missing$(reset))
 	endif
 endif
 endif

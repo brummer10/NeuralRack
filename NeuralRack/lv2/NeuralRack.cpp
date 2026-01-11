@@ -667,6 +667,7 @@ LV2_State_Status Xneuralrack::restore_state(LV2_Handle instance,
     if (value) {
         if (*((int *)value) != self->engine.eqPos) {
             self->engine.eqPos =  *((int *)value);
+            self->engine.setEQPos(self->engine.eqPos);
             self->write_set_eqpos(&self->forge, self->xlv2_eq_pos, self->engine.eqPos);
         }
     }
