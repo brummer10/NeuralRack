@@ -86,6 +86,7 @@ public:
             }
             
         }
+        if (devices.empty()) return false;
 
         std::sort(devices.begin(), devices.end(), 
         [](Devices const &a, Devices const &b) {
