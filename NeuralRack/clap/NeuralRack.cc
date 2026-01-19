@@ -287,6 +287,7 @@ public:
         adj_set_value(ui->widget[27]->adj, static_cast<float>(engine.IRmode));
         adj_set_value(ui->widget[28]->adj, engine.IRmix);
         adj_set_value(ui->widget[29]->adj, engine.MasterOutGain);
+        setEQPos(engine.eqPos);
     }
 
     // send value changes from GUI to the engine
@@ -587,7 +588,6 @@ public:
                 engine._cd.fetch_add(2, std::memory_order_relaxed);
             } else if (key.compare("[EQPos]") == 0) {
                 engine.eqPos = check_stod(remove_sub(line, "[EQPos] "));
-                setEQPos(engine.eqPos);
             }
             key.clear();
             value.clear();
