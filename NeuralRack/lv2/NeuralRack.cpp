@@ -426,6 +426,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
                     write_set_file(&forge, xlv2_ir_file, engine.ir_file.data());
                 if (engine.ir_file1 != "None")
                     write_set_file(&forge, xlv2_ir_file1, engine.ir_file1.data());
+                write_set_eqpos(&forge, xlv2_eq_pos, engine.eqPos);
            } else if (obj->body.otype == patch_Set) {
                 const LV2_Atom* file_path = read_set_file(obj);
                 if (file_path) {
