@@ -229,7 +229,7 @@ void plugin_port_event(LV2UI_Handle handle, uint32_t port_index,
                             lv2_atom_object_get(obj, ui->itf.uris.patch_value, &value, 0);
                             if (value && (value->type == ui->itf.uris.atom_Int)) {
                                 int* eqpos = (int*)LV2_ATOM_BODY(value);
-                               setEQPos(ui, (*eqpos));
+                                setEQPos(ui, (*eqpos));
                             }
                         }
                     }

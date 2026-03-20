@@ -540,7 +540,6 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
     // notify UI on changed model files
     if (engine._notify_ui.load(std::memory_order_acquire)) {
         engine._notify_ui.store(false, std::memory_order_release);
-
         write_set_file(&forge, xlv2_model_file, engine.model_file.data());
         write_set_file(&forge, xlv2_model_file1, engine.model_file1.data());
 

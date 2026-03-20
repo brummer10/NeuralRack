@@ -66,8 +66,8 @@ public:
     void setMaxBufferSize(int maxSize) ;
     void init(unsigned int sample_rate) ;
     void connect(uint32_t port,void* data) ;
-    void normalize(int count, float *buf) ;
-    void compute(int count, float *input0, float *output0) ;
+    void normalize(uint32_t count, float *buf) ;
+    void compute(uint32_t count, float *input0, float *output0) ;
     bool loadModel() ;
     void unloadModel() ;
     void cleanUp() ;

@@ -62,10 +62,10 @@ void NeuralModelLoader::setModelFile(std::string modelFile_) {
     modelFile = modelFile_;
 }
 
-void NeuralModelLoader::normalize(int count, float *buf) {
+void NeuralModelLoader::normalize(uint32_t count, float *buf) {
     if (!model) return;
     if (nGain != 1.0) {
-        for (int i0 = 0; i0 < count; i0 = i0 + 1) {
+        for (uint32_t i0 = 0; i0 < count; i0 = i0 + 1) {
             buf[i0] = float(double(buf[i0]) * nGain);
         }
     }
@@ -75,7 +75,7 @@ int NeuralModelLoader::getPhaseOffset() {
     return phaseOffset;
 }
 
-void NeuralModelLoader::compute(int count, float *input0, float *output0) {
+void NeuralModelLoader::compute(uint32_t count, float *input0, float *output0) {
     if (output0 != input0)
         memcpy(output0, input0, count*sizeof(float));
 
@@ -86,7 +86,7 @@ void NeuralModelLoader::compute(int count, float *input0, float *output0) {
         memcpy(buf, output0, count*sizeof(float));
 
         if (needResample ) {
-            int ReCounta = count;
+            uint32_t ReCounta = count;
             if (needResample == 1) {
                 ReCounta = smp.max_out_count(count);
             } else if (needResample == 2) {
