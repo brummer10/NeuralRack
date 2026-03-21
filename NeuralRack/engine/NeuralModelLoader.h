@@ -20,7 +20,7 @@
 
 #include "NeuralModel.h"
 
-#include "gx_resampler.h"
+#include "StreamingResampler.h"
 
 #pragma once
 
@@ -33,7 +33,8 @@ namespace neuralrack {
 class NeuralModelLoader  {
 private:
     NeuralAudio::NeuralModel*       model;
-    gx_resample::FixedRateResampler smp;
+    StreamingResampler              toModel;
+    StreamingResampler              toStream;
 
     std::atomic<bool>               ready;
     std::atomic<bool>               do_ramp;

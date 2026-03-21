@@ -13,7 +13,7 @@
 namespace neuralrack {
 
 NeuralModelLoader::NeuralModelLoader(std::condition_variable *Sync)
-    : model(nullptr), smp(), SyncWait(Sync) {
+    : model(nullptr), SyncWait(Sync) {
     NeuralAudio::NeuralModel::SetDefaultMaxAudioBufferSize(4096);
     loudness = 0.0;
     nGain = 1.0;
@@ -86,28 +86,12 @@ void NeuralModelLoader::compute(uint32_t count, float *input0, float *output0) {
         memcpy(buf, output0, count*sizeof(float));
 
         if (needResample ) {
-            uint32_t ReCounta = count;
-            if (needResample == 1) {
-                ReCounta = smp.max_out_count(count);
-            } else if (needResample == 2) {
-                ReCounta = static_cast<int>(ceil((count*static_cast<double>(modelSampleRate))/fSampleRate));
-            }
+            int ReCounta = toModel.getOutSize(count);
             float buf1[ReCounta];
             memset(buf1, 0, ReCounta*sizeof(float));
-            if (needResample == 1) {
-                ReCounta = smp.up(count, buf, buf1);
-            } else if (needResample == 2) {
-                smp.down(buf, buf1);
-            } else {
-                memcpy(buf1, buf, ReCounta * sizeof(float));
-            }
+            ReCounta = toModel.resample(buf, buf1, count);
             model->Process(buf1, buf1, ReCounta);
-
-            if (needResample == 1) {
-                smp.down(buf1, buf);
-            } else if (needResample == 2) {
-                smp.up(ReCounta, buf1, buf);
-            }
+            toStream.resample(buf1, buf, ReCounta);
         } else {
             model->Process(buf, buf, count);
         }
@@ -174,12 +158,10 @@ bool NeuralModelLoader::loadModel() {
             }
             modelSampleRate = static_cast<int>(model->GetSampleRate());
             if (modelSampleRate <= 0) modelSampleRate = 48000;
-            if (modelSampleRate > fSampleRate) {
-                smp.setup(fSampleRate, modelSampleRate);
+            if (modelSampleRate != fSampleRate) {
+                toModel.setup(1, 8196, fSampleRate, modelSampleRate);
+                toStream.setup(1, 8196, modelSampleRate, fSampleRate);
                 needResample = 1;
-            } else if (modelSampleRate < fSampleRate) {
-                smp.setup(modelSampleRate, fSampleRate);
-                needResample = 2;
             }
             float* buffer = new float[warmUpSize];
             memset(buffer, 0, warmUpSize * sizeof(float));
