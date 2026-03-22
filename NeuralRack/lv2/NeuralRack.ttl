@@ -92,6 +92,14 @@ nrack:irfile1
     pg:group nrack:G6_IR_Right ;
     rdfs:range atom:Path .
 
+nrack:eqpos
+    a lv2:Parameter ;
+    rdfs:label "EQ position" ;
+    rdfs:range atom:Int ;
+    lv2:default 1 ;
+    lv2:minimum 0 ;
+    lv2:maximum 2 .
+
 <urn:brummer:neuralrack>
    a lv2:Plugin ,
        lv2:SimulatorPlugin ;
@@ -107,8 +115,8 @@ nrack:irfile1
    opts:supportedOption bufsz:maxBlockLength ;
    lv2:extensionData work:interface ,
                     state:interface ;
-   lv2:minorVersion 2 ;
-   lv2:microVersion 0 ;
+   lv2:minorVersion 3 ;
+   lv2:microVersion 2 ;
 
 guiext:ui <urn:brummer:neuralrack_ui> ;
 
@@ -117,6 +125,8 @@ patch:writable nrack:Neural_Model1 ;
 
 patch:writable nrack:irfile ;
 patch:writable nrack:irfile1 ;
+
+patch:writable nrack:eqpos;
 
 rdfs:comment """
 Neuralrack is a Neural Model loader with support for *.nam, *.aidax and *.json based model files.

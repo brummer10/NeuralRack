@@ -140,6 +140,29 @@ char* utf8crop(char* dst, const char* src, size_t sizeDest ) {
     return dst;
 }
 
+void utf8crop_middle(char* dst, const char* src, size_t maxLen) {
+    size_t len = strlen(src);
+    if (len < maxLen) {
+        strcpy(dst, src);
+        return;
+    }
+
+    if (maxLen < 5) {
+        utf8crop(dst, src, maxLen);
+        return;
+    }
+
+    size_t left = (maxLen - 3) / 2;
+    size_t right = maxLen - 3 - left;
+    char tmp[256];
+    utf8crop(tmp, src, left + 1);
+    strcpy(dst, tmp);
+    strcat(dst, "...");
+    const char* tail = src + len - right;
+    utf8crop(tmp, tail, right + 1);
+    strcat(dst, tmp);
+}
+
 // draw the EQ and the Noise Gate window
 void draw_eq_window(void *w_, void* user_data) {
     Widget_t *w = (Widget_t*)w_;
@@ -250,9 +273,8 @@ void draw_elem(void *w_, void* user_data) {
         cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(m.filename));
         
-        if ((slen - 4) > 38) {
-            utf8crop(label,basename(m.filename), 38);
-            strcat(label,"...");
+        if (slen > 38) {
+            utf8crop_middle(label,basename(m.filename), 38);
             tooltip_set_text(m.filebutton,basename(m.filename));
             m.filebutton->flags |= HAS_TOOLTIP;
         } else {
@@ -323,9 +345,8 @@ void draw_ir_elem(void *w_, void* user_data) {
         cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir.filename));
         
-        if ((slen - 4) > 36) {
-            utf8crop(label,basename(ps->ir.filename), 36);
-            strcat(label,"...");
+        if (slen > 36) {
+            utf8crop_middle(label,basename(ps->ir.filename), 36);
             tooltip_set_text(ps->ir.filebutton,basename(ps->ir.filename));
             ps->ir.filebutton->flags |= HAS_TOOLTIP;
         } else {
@@ -346,9 +367,8 @@ void draw_ir_elem(void *w_, void* user_data) {
         cairo_set_font_size (w->crb, w->app->big_font-3);
         int slen = strlen(basename(ps->ir1.filename));
         
-        if ((slen - 4) > 36) {
-            utf8crop(label,basename(ps->ir1.filename), 36);
-            strcat(label,"...");
+        if (slen > 36) {
+            utf8crop_middle(label,basename(ps->ir1.filename), 36);
             tooltip_set_text(ps->ir1.filebutton,basename(ps->ir1.filename));
             ps->ir1.filebutton->flags |= HAS_TOOLTIP;
         } else {
@@ -1177,9 +1197,8 @@ void draw_my_combobox(void *w_, void* user_data) {
     int slen = strlen(comboboxlist->list_names[vl]);
     widget_set_scale(w);
 
-    if ((slen - 4) > 45) {
-        utf8crop(label,comboboxlist->list_names[vl], 45);
-        strcat(label,"...");
+    if (slen > 45) {
+        utf8crop_middle(label,comboboxlist->list_names[vl], 45);
         tooltip_set_text(w,comboboxlist->list_names[vl]);
         w->flags |= HAS_TOOLTIP;
     } else {

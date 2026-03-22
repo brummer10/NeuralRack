@@ -14,12 +14,26 @@
 #include <cstring>
 
 
+/****************************************************************
+ StreamingResampler - cubic hermite resampler with nyquist lowpass in down sampler
+*****************************************************************/
+
 class StreamingResampler {
 public:
     StreamingResampler() = default;
 
     void setup(uint32_t channels, uint32_t maxBlockSize, uint32_t fs_in, uint32_t fs_out) {
         chan = channels;
+
+        downSample = fs_in > fs_out;
+        if (downSample) {
+            lpf.resize(chan);
+            float cutoff = 0.45f * fs_out;
+            for (uint32_t ch = 0; ch < chan; ++ch) {
+                lpf[ch].setup((float)fs_in, cutoff);
+            }
+        }
+
         ratio = double(fs_in) / double(fs_out);
         bufferSize = maxBlockSize + 8;
         buffer.resize(bufferSize * chan, 0.0f);
@@ -30,10 +44,13 @@ public:
         readPos = 0.0;
         buffered = 0;
         std::fill(buffer.begin(), buffer.end(), 0.0f);
+        for (auto& f : lpf) f.reset();
     }
 
     void setSampleRates(uint32_t fs_in, uint32_t fs_out) {
         ratio = double(fs_in) / double(fs_out);
+        bool useLPF = (fs_in > fs_out);
+        if (useLPF != downSample) setup(chan, bufferSize / chan, fs_in, fs_out);
     }
 
     uint32_t getOutSize(uint32_t inFrames) const {
@@ -70,6 +87,32 @@ public:
     }
 
 private:
+    struct LPF {
+        float a0, a1, a2, b1, b2;
+        float z1 = 0.0f, z2 = 0.0f;
+
+        void setup(float sampleRate, float cutoff) {
+            float K = std::tan(M_PI * cutoff / sampleRate);
+            float norm = 1.0f / (1.0f + std::sqrt(2.0f)*K + K*K);
+            a0 = K*K * norm;
+            a1 = 2.0f * a0;
+            a2 = a0;
+            b1 = 2.0f * (K*K - 1.0f) * norm;
+            b2 = (1.0f - std::sqrt(2.0f)*K + K*K) * norm;
+        }
+
+        inline float process(float x) {
+            float y = a0*x + z1;
+            z1 = a1*x - b1*y + z2;
+            z2 = a2*x - b2*y;
+            return y;
+        }
+
+        void reset() { z1 = z2 = 0.0f; }
+    };
+
+    std::vector<LPF> lpf;
+    bool downSample = false;
     uint32_t chan = 0;
     double ratio = 1.0;
     std::vector<float> buffer;
@@ -80,8 +123,9 @@ private:
     void append(const float* input, uint32_t frames) {
         for (uint32_t i = 0; i < frames; ++i) {
             for (uint32_t ch = 0; ch < chan; ++ch) {
-                buffer[(buffered + i) * chan + ch] =
-                    input[i * chan + ch];
+                float s = input[i * chan + ch];
+                if (downSample) s = lpf[ch].process(s);
+                buffer[(buffered + i) * chan + ch] = s;
             }
         }
         buffered += frames;
