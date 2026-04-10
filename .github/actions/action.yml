@@ -256,6 +256,9 @@ runs:
         echo t3
         ./PawPaw/bootstrap-jack2.sh ${{ env.PAWPAW_TARGET }}
         echo t4
+        if [[ "${{ env.PAWPAW_TARGET }}" == *linux* ]]; then
+          ./PawPaw/build-jack2.sh ${{ env.PAWPAW_TARGET }}
+        fi
         ./PawPaw/.cleanup.sh ${{ env.PAWPAW_TARGET }}
         echo t5
 

@@ -68,6 +68,7 @@ static int process(const void* inputBuffer, void* outputBuffer,
 #if defined(__linux__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__OpenBSD__)
 
+#if defined(HAVE_JACK)
 bool jack_available() {
     char buffer[1024];
     auto fp = fmemopen(buffer, 1024, "w");
@@ -84,6 +85,7 @@ bool jack_available() {
     }
     return false;
 }
+#endif
 
 void signal_handler (int sig) {
     switch (sig) {
