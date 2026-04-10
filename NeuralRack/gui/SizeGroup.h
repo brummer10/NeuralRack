@@ -51,6 +51,7 @@ typedef struct {
 
     int animateOnAdd;
     int tweensActive;
+    int animationInit;
 
 } VerticalSizeGroup;
 
@@ -86,7 +87,8 @@ static inline void vsg_init(VerticalSizeGroup* g,
     g->glowY = glowY;           // drop indicator
     g->animateOnAdd = 1;        // switch animation on/off
     g->newIndex = 1;            // the drop index 
-    g->wmy = sy;                // the current position from a dragged window 
+    g->wmy = sy;                // the current position from a dragged window
+    g->animationInit = 0;       // set initial layout
 }
 
 // call from a GUI timeout loop (60fps)
@@ -122,11 +124,14 @@ static inline void vsg_relayout(VerticalSizeGroup* g) {
         int ty = y;
         int fy = w->scale.init_y;
 
-        if (g->animateOnAdd && i>=g->from && i<g->to) {
+        if ((g->animateOnAdd && i>=g->from && i<g->to) || g->animationInit) {
             if (g->from==0 && g->to==g->entryCount) {
                 fy = g->startY - 80;
             } else if (i==g->newIndex) {
                 fy = g->wmy;
+            }
+            if (g->animationInit) {
+                fy = g->startY - 80;
             }
 
             if (g->tweenCount+1 > g->tweenCap) {
@@ -144,6 +149,7 @@ static inline void vsg_relayout(VerticalSizeGroup* g) {
         w->scale.init_y = ty;
         y += w->height + g->spacingY;
     }
+    g->animationInit = 0;
 }
 
 // add element to the size-group 

@@ -236,7 +236,16 @@ ifeq (,$(filter vst2,$(MAKECMDGOALS)))
 	JACKFLAGS += -DHAVE_JACK
 	INFOSTRING += JACK
 	endif
+	ifeq ($(TARGET), Linux)
+	HAVEALSA = -lasound
+	ifneq ($(HAVEALSA), )
+	JACKFLAGS += -DHAVE_ALSA
+	INFOSTRING += and ALSA
+	endif
+	endif
+	ifeq ($(TARGET), Windows)
 	HAVEPA = $(shell $(PKGCONFIG) $(PKGCONFIG_FLAGS) --cflags  --libs portaudio-2.0 2>/dev/null)
+	endif
 	ifneq ($(HAVEPA), )
 	ifneq ($(HAVEJACK), )
 	INFOSTRING += and
@@ -274,7 +283,7 @@ ifeq ($(TARGET), Linux)
 
 	JACKLDFLAGS += -fvisibility=hidden -lm -fPIC -pthread -lpthread \
 	-Wl,-z,noexecstack -Wl,--no-undefined -Wl,--gc-sections  -Wl,--exclude-libs,ALL \
-	`$(PKGCONFIG) --cflags --libs sndfile ` $(HAVEPA) $(HAVEJACK) $(GUI_LDFLAGS)
+	`$(PKGCONFIG) --cflags --libs sndfile ` $(HAVEPA) $(HAVEJACK) $(HAVEALSA) $(GUI_LDFLAGS)
 
 	CXXFLAGS += -MMD -flto=auto -fPIC -DPIC -Wall -funroll-loops $(SSE_CFLAGS) \
 	-Wno-sign-compare -Wno-reorder -Wno-infinite-recursion -DUSE_ATOM $(FFT_FLAG) \
@@ -339,7 +348,9 @@ ifneq ($(MAKECMDGOALS),install)
   ifneq ($(MAKECMDGOALS),uninstall)
     ifneq ($(MAKECMDGOALS),clean)
       $(info ==================$(yellow) CXXFLAGS $(reset)=====================)
-      $(info $(blue)$(CXXFLAGS)$(reset))
+      $(info $(blue)$(CXXFLAGS) $(reset)Stand-alone:$(blue) $(JACKFLAGS) $(reset))
+      $(info ==================$(yellow) LDFLAGS $(reset)=====================)
+      $(info $(blue)$(LDFLAGS) $(reset)Stand-alone:$(blue) $(JACKLDFLAGS) $(reset))
       $(info ===================$(yellow) BUILD $(reset)=======================)
     endif
   endif

@@ -12,7 +12,7 @@
 
 
 /****************************************************************
-        jack.cc   native jackd support for Ratatouille
+        jack.cc   native jackd support for NeuralRack
         
         this file is meant to be included in main.
 ****************************************************************/

@@ -193,7 +193,7 @@ public:
     }
 
     inline void process(uint32_t n_samples, float* output, float* output1) {
-        if (processCounter > 2) engine.process(n_samples, output, output1);
+        engine.process(n_samples, output, output1);
     }
 
     // send value changes from GUI to the engine
@@ -430,6 +430,7 @@ public:
                             engine._cd.fetch_add(2, std::memory_order_relaxed);
                         } else if (key.compare("[EQPos]") == 0) {
                             engine.eqPos = check_stod(remove_sub(line, "[EQPos] "));
+                            if (engine.eqPos != 1) ui->g.animationInit = 1;
                             setEQPos(engine.eqPos);
                         }
                     }
@@ -989,7 +990,8 @@ private:
     // timeout loop to check output ports from engine
     void checkEngine() {
         // come back later
-        if (processCounter < 3) {
+        if (!engine.bufferIsInit.load(std::memory_order_acquire)) return;
+        if (processCounter < 1) {
             processCounter++;
             return;
         }

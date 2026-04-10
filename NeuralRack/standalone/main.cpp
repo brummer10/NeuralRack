@@ -26,6 +26,10 @@
 
 NeuralRack *r;
 
+#if defined(HAVE_ALSA)
+#include "alsa.cc"
+#endif
+
 #if defined(HAVE_JACK)
 #include "jack.cc"
 #endif
@@ -63,6 +67,24 @@ static int process(const void* inputBuffer, void* outputBuffer,
 
 #if defined(__linux__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__OpenBSD__)
+
+bool jack_available() {
+    char buffer[1024];
+    auto fp = fmemopen(buffer, 1024, "w");
+    if ( !fp ) { std::printf("error"); }
+    auto old = stderr;
+    stderr = fp;
+    jack_status_t status;
+    jack_client_t* c = jack_client_open( "probe", JackNoStartServer, &status);
+    std::fclose(fp);
+    stderr = old;
+    if (c) {
+        jack_client_close(c);
+        return true;
+    }
+    return false;
+}
+
 void signal_handler (int sig) {
     switch (sig) {
         case SIGINT:
@@ -95,6 +117,7 @@ int main(int argc, char *argv[]){
         }
     }
 
+
     #if defined(__linux__) || defined(__FreeBSD__) || \
         defined(__NetBSD__) || defined(__OpenBSD__)
     #if defined(PAWPAW)
@@ -108,23 +131,31 @@ int main(int argc, char *argv[]){
     #endif
     r = new NeuralRack();
     r->startGui();
-
     #if defined(__linux__) || defined(__FreeBSD__) || \
         defined(__NetBSD__) || defined(__OpenBSD__)
     signal (SIGQUIT, signal_handler);
     signal (SIGTERM, signal_handler);
     signal (SIGHUP, signal_handler);
     signal (SIGINT, signal_handler);
+    bool haveJack = jack_available();
+
+    #if defined(HAVE_JACK)
+    if (haveJack) {
+        startJack();
+    }
     #endif
+
+    #if defined(HAVE_ALSA)
+    if (!haveJack) {
+        startAlsa();
+    }
+    #endif
+    #else // windows
 
     #if defined(HAVE_PA)
     XPa xpa ("Neuralrack");
     if(!xpa.openStream(1, 2, &process, nullptr)) {
-        #if defined(HAVE_JACK)
-        startJack();
-        #else    
         r->quitGui();
-        #endif
     } else {
         runPA = true;
         r->initEngine(xpa.getSampleRate(), 25, 1);
@@ -133,8 +164,7 @@ int main(int argc, char *argv[]){
         if(!xpa.startStream()) r->quitGui();
         r->setXPa(&xpa, xpa.haveASIO);
     }
-    #else
-    startJack();
+    #endif
     #endif
 
     if (argc > 1) {
@@ -142,14 +172,21 @@ int main(int argc, char *argv[]){
     }
 
     main_run(r->getMain());
+    
+    #if defined(__linux__) || defined(__FreeBSD__) || \
+        defined(__NetBSD__) || defined(__OpenBSD__)
 
+    #if defined(HAVE_ALSA)
+    if (!haveJack) quitAlsa();
+    #endif
+    #if defined(HAVE_JACK)
+    if (haveJack) quitJack();
+    #endif
+
+    #else // windows
     #if defined(HAVE_PA)
     if (runPA) xpa.stopStream();
-    #if defined(HAVE_JACK)
-    else quitJack();
     #endif
-    #else
-    quitJack();
     #endif
 
     r->cleanup();

@@ -66,7 +66,8 @@ make
 ## Optional Dependencies to build the standalone version
 
 - libjack(-jackd2)-dev
-- portaudio19-dev
+- libasound2-dev
+- portaudio19-dev --> windows only
 
 ## Building LV2 plug from source code
 

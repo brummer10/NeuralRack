@@ -447,7 +447,6 @@ inline void Engine::processEQ(uint32_t n_samples, float* output) {
 inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1)
 {
     if(n_samples<1) return;
-
     // basic bypass
     if (!bypass) {
         Sync.notify_all();
@@ -623,17 +622,18 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
 }
 
 inline void Engine::process(uint32_t n_samples, float* output, float* output1) {
+    if(n_samples<1) return;
+    if (buffersize < n_samples) {
+        bufsize = n_samples;
+        bufferIsInit.store(false, std::memory_order_release);
+        _execute.store(true, std::memory_order_release);
+        xrworker.runProcess();
+        return;
+    }
     // process in buffered mode
     if ((buffered > 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
         // avoid buffer overflow on frame size change
         par.setProcessor(0);
-        if (buffersize < n_samples) {
-            bufsize = n_samples;
-            bufferIsInit.store(false, std::memory_order_release);
-            _execute.store(true, std::memory_order_release);
-            xrworker.runProcess();
-            return;
-        }
         // get the buffer from previous process
         if (!par.processWait()) {
             XrunCounter += 1;
