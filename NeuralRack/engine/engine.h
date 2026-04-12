@@ -499,10 +499,11 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     if ((buffered == 1.0) && bufferIsInit.load(std::memory_order_acquire)) {
         // avoid buffer overflow on frame size change
         if (buffersize < n_samples) {
-            bufsize = n_samples;
-            bufferIsInit.store(false, std::memory_order_release);
-            _execute.store(true, std::memory_order_release);
-            xrworker.runProcess();
+            if (!_execute.exchange(true, std::memory_order_acq_rel)) {
+                bufsize = n_samples;
+                bufferIsInit.store(false, std::memory_order_release);
+                xrworker.runProcess();
+            }
             return;
         }
         par.setProcessor(1);
@@ -624,10 +625,11 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
 inline void Engine::process(uint32_t n_samples, float* output, float* output1) {
     if(n_samples<1) return;
     if (buffersize < n_samples) {
-        bufsize = n_samples;
-        bufferIsInit.store(false, std::memory_order_release);
-        _execute.store(true, std::memory_order_release);
-        xrworker.runProcess();
+        if (!_execute.exchange(true, std::memory_order_acq_rel)) {
+            bufsize = n_samples;
+            bufferIsInit.store(false, std::memory_order_release);
+            xrworker.runProcess();
+        }
         return;
     }
     // process in buffered mode

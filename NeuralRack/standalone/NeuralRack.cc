@@ -41,7 +41,6 @@ public:
     NeuralRack() : engine() {
         workToDo.store(false, std::memory_order_release);
         presetToLoad.store(false, std::memory_order_release);
-        processCounter = 0;
         settingsHaveChanged = false;
         disableAutoConnect = false;
         s_time = 0.0;
@@ -481,7 +480,6 @@ private:
     Widget_t*               AutoConnect;
     Widget_t*               EngineMenu;
     Widget_t*               ASIOPannel;
-    int                     processCounter;
     bool                    settingsHaveChanged;
     bool                    disableAutoConnect;
     std::atomic<bool>       workToDo;
@@ -989,12 +987,6 @@ private:
 
     // timeout loop to check output ports from engine
     void checkEngine() {
-        // come back later
-        if (!engine.bufferIsInit.load(std::memory_order_acquire)) return;
-        if (processCounter < 1) {
-            processCounter++;
-            return;
-        }
         #if defined(__linux__) || defined(__FreeBSD__) || \
             defined(__NetBSD__) || defined(__OpenBSD__)
         XLockDisplay(ui->main.dpy);
@@ -1007,9 +999,9 @@ private:
         XUnlockDisplay(ui->main.dpy);
         #endif        
         if (workToDo.load(std::memory_order_acquire)) {
-            if (engine.xrworker.getProcess()) {
+            if (engine.xrworker.getProcess() && 
+                    !engine._execute.exchange(true, std::memory_order_acq_rel)) {
                 workToDo.store(false, std::memory_order_release);
-                engine._execute.store(true, std::memory_order_release);
                 engine.xrworker.runProcess();
             }
         } else if (engine._notify_ui.load(std::memory_order_acquire)) {
