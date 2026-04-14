@@ -40,8 +40,8 @@ void sendValueChanged(X11_UI *ui, int port, float value) {
 }
 
 // send a file name from GUI to the engine
-void sendFileName(X11_UI *ui, ModelPicker* m, int old){
-    r->sendFileName(m, old);
+void sendFileName(X11_UI *ui, ModelPicker* m){
+    r->sendFileName(m);
 }
 
 // the portaudio server process callback

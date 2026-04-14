@@ -532,8 +532,7 @@ inline void Xneuralrack::check_messages(uint32_t n_samples)
         if (!doit) doit = true;
     }
     // run worker thread when needed
-    if (doit && !engine._execute.load(std::memory_order_acquire)) {
-        engine._execute.store(true, std::memory_order_release);
+    if (doit && !engine._execute.exchange(true, std::memory_order_acq_rel)) {
         engine.xrworker.runProcess();
         doit = false;
     } 

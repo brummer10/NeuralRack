@@ -201,9 +201,9 @@ public:
         if(ui->g.newIndex != engine.eqPos) engine.setEQPos(ui->g.newIndex);
 
         if (workToDo.load(std::memory_order_acquire)) {
-            if (engine.xrworker.getProcess()) {
+            if (engine.xrworker.getProcess() && 
+                    !engine._execute.exchange(true, std::memory_order_acq_rel)) {
                 workToDo.store(false, std::memory_order_release);
-                engine._execute.store(true, std::memory_order_release);
                 engine.xrworker.runProcess();
             }
         } else if (engine._notify_ui.load(std::memory_order_acquire)) {
@@ -441,47 +441,34 @@ public:
     }
 
     // send a file name from GUI to the engine
-    void sendFileName(ModelPicker* m, int old) {
-        X11_UI_Private_t *ps = (X11_UI_Private_t*)ui->private_ptr;
-        if ((strcmp(m->filename, "None") == 0)) {
-            if (old == 1) {
-                if ( m == &ps->ma) {
+    void sendFileName(ModelPicker* m) {
+        if ((strcmp(m->filename, "None") == 0) || ends_with(m->filename, "nam") ||
+                ends_with(m->filename, "json") || ends_with(m->filename, "aidax") ||
+                ends_with(m->filename, "wav") || ends_with(m->filename, "WAV")) {
+
+            int model = m->model;
+            switch(model) {
+                case 1:
                     engine.model_file = m->filename;
                     engine._ab.fetch_add(1, std::memory_order_relaxed);
-                } else {
+                break;
+                case 2:
                     engine.model_file1 = m->filename;
                     engine._ab.fetch_add(2, std::memory_order_relaxed);
-                }
-            } else if (old == 2) {
-                if ( m == &ps->ir) {
+                break;
+                case 3:
                     engine.ir_file = m->filename;
                     engine._cd.fetch_add(1, std::memory_order_relaxed);
-                } else {
+                break;
+                case 4:
                     engine.ir_file1 = m->filename;
                     engine._cd.fetch_add(2, std::memory_order_relaxed);
-                }
-            } else return;
-        } else if (ends_with(m->filename, "nam") ||
-                   ends_with(m->filename, "json") ||
-                   ends_with(m->filename, "aidax")) {
-            if ( m == &ps->ma) {
-                engine.model_file = m->filename;
-                engine._ab.fetch_add(1, std::memory_order_relaxed);
-            } else {
-                engine.model_file1 = m->filename;
-                engine._ab.fetch_add(2, std::memory_order_relaxed);
+                break;
+                default :
+                break;
             }
-        } else if (ends_with(m->filename, "wav")||
-                   ends_with(m->filename, "WAV") ) {
-            if ( m == &ps->ir) {
-                engine.ir_file = m->filename;
-                engine._cd.fetch_add(1, std::memory_order_relaxed);
-            } else {
-                engine.ir_file1 = m->filename;
-                engine._cd.fetch_add(2, std::memory_order_relaxed);
-            }
+            workToDo.store(true, std::memory_order_release);
         } else return;
-        workToDo.store(true, std::memory_order_release);
     }
 
     void setEQPos(int pos) {
@@ -596,12 +583,10 @@ public:
             if (pos == std::string::npos) break;
         }
         workToDo.store(true, std::memory_order_release);
-        if (engine.xrworker.getProcess()) {
+        if (engine.xrworker.getProcess() && 
+                !engine._execute.exchange(true, std::memory_order_acq_rel)) {
             workToDo.store(false, std::memory_order_release);
-            engine._execute.store(true, std::memory_order_release);
             engine.xrworker.runProcess();
-        } else {
-            fprintf(stderr, "Fail to get worker!!\n");
         }
     }
 
@@ -718,8 +703,8 @@ void sendValueChanged(X11_UI *ui, int port, float value) {
 }
 
 // send a file name from GUI to the engine
-void sendFileName(X11_UI *ui, ModelPicker* m, int old){
+void sendFileName(X11_UI *ui, ModelPicker* m){
     NeuralRack *r = (NeuralRack*)ui->win->private_struct;
-    r->sendFileName(m, old);
+    r->sendFileName(m);
 }
 

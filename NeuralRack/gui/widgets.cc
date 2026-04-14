@@ -1248,8 +1248,8 @@ static void my_fbutton_callback(void *w_, void* user_data) {
         if (!filebutton->w) {
             filebutton->w = open_file_dialog(w,filebutton->path,filebutton->filter);
             filebutton->w->flags |= HIDE_ON_DELETE;
-            if (strcmp(filebutton->filter, ".wav|.WAV") == 0) {
-                widget_set_title(filebutton->w, _("File Selector - Select Impulse Response"));
+            if (strcmp(filebutton->filter, ".nam|.wav|.WAV") == 0) {
+                widget_set_title(filebutton->w, _("File Selector - Select Impulse Response or Outboard Model"));
             } else {
                 widget_set_title(filebutton->w, _("File Selector - Select Neural Model"));
             }
@@ -1354,7 +1354,7 @@ Widget_t* add_lv2_file_button(Widget_t *w, Widget_t *p, int index, const char * 
 
 Widget_t* add_lv2_irfile_button(Widget_t *w, Widget_t *p, int index, const char * label,
                                 X11_UI* ui, int x, int y, int width, int height) {
-    w = add_my_file_button(p, x, y, width, height, "IR File", "", ".wav|.WAV");
+    w = add_my_file_button(p, x, y, width, height, "IR File", "", ".nam|.wav|.WAV");
     widget_get_png(w, LDVAR(menu_png));
     w->data = index;
     return w;

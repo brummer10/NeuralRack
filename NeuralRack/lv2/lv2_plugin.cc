@@ -98,32 +98,35 @@ int ends_with(const char* name, const char* extension) {
     return 0;
 }
 
-void sendFileName(X11_UI *ui, ModelPicker* m, int old) {
-    X11_UI_Private_t *ps = (X11_UI_Private_t*)ui->private_ptr;
+void sendFileName(X11_UI *ui, ModelPicker* m) {
     LV2_URID urid;
-    if ((strcmp(m->filename, "None") == 0)) {
-        if (old == 1) {
-            if ( m == &ps->ma) urid = ui->itf.uris.neural_model;
-            else urid = ui->itf.uris.neural_model1;
-        } else if (old == 2) {
-            if ( m == &ps->ir) urid = ui->itf.uris.conv_ir_file;
-            else urid = ui->itf.uris.conv_ir_file1;
-        } else return;
-    } else if (ends_with(m->filename, "nam") ||
-               ends_with(m->filename, "json") ||
-               ends_with(m->filename, "aidax")) {
-        if ( m == &ps->ma) urid = ui->itf.uris.neural_model;
-        else  urid = ui->itf.uris.neural_model1;
-    } else if (ends_with(m->filename, "wav") ||
-               ends_with(m->filename, "WAV") ) {
-        if ( m == &ps->ir) urid = ui->itf.uris.conv_ir_file;
-        else urid = ui->itf.uris.conv_ir_file1;
+    if ((strcmp(m->filename, "None") == 0) || ends_with(m->filename, "nam") ||
+            ends_with(m->filename, "json") || ends_with(m->filename, "aidax") ||
+            ends_with(m->filename, "wav") || ends_with(m->filename, "WAV")) {
+
+        int model = m->model;
+        switch(model) {
+            case 1:
+                urid = ui->itf.uris.neural_model;
+            break;
+            case 2:
+                urid = ui->itf.uris.neural_model1;
+            break;
+            case 3:
+                urid = ui->itf.uris.conv_ir_file;
+            break;
+            case 4:
+                urid = ui->itf.uris.conv_ir_file1;
+            break;
+            default :
+            break;
+        }
+        uint8_t obj_buf[OBJ_BUF_SIZE];
+        lv2_atom_forge_set_buffer(&ui->itf.forge, obj_buf, OBJ_BUF_SIZE);
+        LV2_Atom* msg = (LV2_Atom*)write_set_file(urid, &ui->itf.forge, &ui->itf.uris, m->filename);
+        ui->itf.write_function(ui->itf.controller, 5, lv2_atom_total_size(msg),
+                           ui->itf.uris.atom_eventTransfer, msg);
     } else return;
-    uint8_t obj_buf[OBJ_BUF_SIZE];
-    lv2_atom_forge_set_buffer(&ui->itf.forge, obj_buf, OBJ_BUF_SIZE);
-    LV2_Atom* msg = (LV2_Atom*)write_set_file(urid, &ui->itf.forge, &ui->itf.uris, m->filename);
-    ui->itf.write_function(ui->itf.controller, 5, lv2_atom_total_size(msg),
-                       ui->itf.uris.atom_eventTransfer, msg);
 }
 
 Widget_t *get_widget_from_urid(X11_UI *ui, const LV2_URID urid) {

@@ -37,6 +37,7 @@
 #include "dcblocker.cc"
 #include "eq.cc"
 #include "NoiseGate.cc"
+#include "cdelay.cc"
 
 #include "NeuralModelLoader.h"
 #include "fftconvolver.h"
@@ -94,10 +95,13 @@ public:
     ParallelThread               xrworker;
     NeuralModelLoader            slotA;
     NeuralModelLoader            slotB;
+    NeuralModelLoader            slotC;
+    NeuralModelLoader            slotD;
     ConvolverSelector            conv;
     ConvolverSelector            conv1;
     eq::Dsp*                     peq;
     noisegate::Dsp*              ngate;
+    cdeleay::Dsp*                pdelay;
 
     float                        inputGain;
     float                        inputGain1;
@@ -135,6 +139,8 @@ public:
     std::atomic<bool>            _notify_ui;
     std::atomic<bool>            _neuralA;
     std::atomic<bool>            _neuralB;
+    std::atomic<bool>            _neuralC;
+    std::atomic<bool>            _neuralD;
     std::atomic<bool>            bufferIsInit;
     std::atomic<int>             _ab;
     std::atomic<int>             _cd;
@@ -143,6 +149,7 @@ public:
     inline Engine();
     inline ~Engine();
 
+    inline void setSampleRate(uint32_t rate);
     inline void init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_);
     inline void setEQPos(uint32_t _eqPos);
     inline void clean_up();
@@ -162,6 +169,7 @@ private:
     float*                       bufferinput0;
     float*                       _bufb;
 
+    float                        phasecor_;
     double                       fRec0[2];
     double                       fRec3[2];
     double                       fRec2[2];
@@ -177,7 +185,7 @@ private:
     inline void processEQ(uint32_t n_samples, float* output);
     inline void processBufferedSlotB();
     inline void processDsp(uint32_t n_samples, float* output, float* output1);
-
+    static bool endsWith(const std::string& str, const std::string& suffix);
     inline void setModel(NeuralModelLoader *slot,
                 std::string *file, std::atomic<bool> *set);
 
@@ -191,8 +199,11 @@ inline Engine::Engine() :
     dcb(dcblocker::plugin()),
     peq(eq::plugin()),
     ngate(noisegate::plugin()),
+    pdelay(cdeleay::plugin()),
     slotA(&Sync),
     slotB(&Sync),
+    slotC(&Sync),
+    slotD(&Sync),
     conv(),
     conv1(),
     bufferoutput0(NULL),
@@ -220,6 +231,7 @@ inline Engine::Engine() :
         buffered = 0.0;
         latency = 0.0;
         XrunCounter = 0.0;
+        phasecor_ = 0.0;
 
         model_file = "None";
         model_file1 = "None";
@@ -232,6 +244,8 @@ inline Engine::Engine() :
 
         _neuralA.store(false, std::memory_order_release);
         _neuralB.store(false, std::memory_order_release);
+        _neuralC.store(false, std::memory_order_release);
+        _neuralD.store(false, std::memory_order_release);
         _eqPos.store(1, std::memory_order_release);
 };
 
@@ -247,21 +261,30 @@ inline Engine::~Engine(){
     dcb->del_instance(dcb);
     peq->del_instance(peq);
     ngate->del_instance(ngate);
+    pdelay->del_instance(pdelay);
     slotA.cleanUp();
     slotB.cleanUp();
+    slotC.cleanUp();
+    slotD.cleanUp();
     conv.stop_process();
     conv.cleanup();
     conv1.stop_process();
     conv1.cleanup();
 };
 
-inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
+inline void Engine::setSampleRate(uint32_t rate) {
     s_rate = rate;
     dcb->init(rate);
     peq->init(rate);
     ngate->init(rate);
     slotA.init(rate);
-    slotB.init(rate);
+    slotB.init(rate);    
+    slotC.init(rate);
+    slotD.init(rate);    
+}
+
+inline void Engine::init(uint32_t rate, int32_t rt_prio_, int32_t rt_policy_) {
+    setSampleRate(rate);
 
     rt_prio = rt_prio_;
     rt_policy = rt_policy_;
@@ -326,6 +349,11 @@ inline void Engine::setModel(NeuralModelLoader *slot,
     }
 }
 
+bool Engine::endsWith(const std::string& str, const std::string& suffix) {
+    if (str.size() < suffix.size()) return false;
+    return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 inline void Engine::setIRFile(ConvolverSelector *co, std::string *file) {
     if (co->is_runnable()) {
         co->set_not_runnable();
@@ -337,15 +365,30 @@ inline void Engine::setIRFile(ConvolverSelector *co, std::string *file) {
     co->cleanup();
     co->set_samplerate(s_rate);
     co->set_buffersize(bufsize);
-
-    if (*file != "None") {
-        co->configure(*file, 1.0, 0, 0, 0, 0, 0);
-        while (!co->checkstate());
-        if(!co->start(rt_prio, rt_policy)) {
-            *file = "None";
-           // lv2_log_error(&logger,"impulse convolver update fail\n");
+    if (endsWith(*file, "nam")) {
+        if (co == &conv) setModel(&slotC, file, &_neuralC);
+        else if (co == &conv1) setModel(&slotD, file, &_neuralD);
+    } else {
+        if (co == &conv) _neuralC.store(false, std::memory_order_release);
+        else if (co == &conv1) _neuralD.store(false, std::memory_order_release);
+        if (*file != "None") {
+            co->configure(*file, 1.0, 0, 0, 0, 0, 0);
+            while (!co->checkstate());
+            if(!co->start(rt_prio, rt_policy)) {
+                *file = "None";
+               // lv2_log_error(&logger,"impulse convolver update fail\n");
+            }
         }
     }
+    // calculate phase correction
+    int cp = _neuralC.load(std::memory_order_acquire) ? slotC.getPhaseOffset() : 0;
+    int dp = _neuralD.load(std::memory_order_acquire) ? slotD.getPhaseOffset() : 0;
+    phaseOffset = dp - cp;
+    //fprintf(stderr, "phaseOffset C = %i\n", cp);
+    //fprintf(stderr, "phaseOffset D = %i\n", dp);
+    //fprintf(stderr, "phaseOffset = %i\n", phaseOffset);
+    pdelay->set(phaseOffset);
+    pdelay->clear_state_f();
 }
 
 void Engine::do_work_mono() {
@@ -389,6 +432,8 @@ void Engine::do_work_mono() {
         pro.setTimeOut(std::max(100,static_cast<int>((bufsize/(s_rate*0.000001))*0.1)));
         slotA.setMaxBufferSize(bufsize * 2);
         slotB.setMaxBufferSize(bufsize * 2);
+        slotC.setMaxBufferSize(bufsize * 2);
+        slotD.setMaxBufferSize(bufsize * 2);
     }
     // set flag that work is done ready
     _execute.store(false, std::memory_order_release);
@@ -398,7 +443,11 @@ void Engine::do_work_mono() {
 
 // process second convolver in parallel thread
 inline void Engine::processConv1() {
-    conv1.compute(bufsize, _bufb, _bufb);
+    if (_neuralD.load(std::memory_order_acquire)) {
+        slotD.compute(bufsize, _bufb, _bufb);
+    } else if (conv1.is_runnable()) {
+        conv1.compute(bufsize, _bufb, _bufb);
+    }
 }
 
 // process dsp in buffered in a background thread
@@ -547,9 +596,10 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
     memcpy(bufb, output, n_samples*sizeof(float));
     bufsize = n_samples;
 
-    // process conv1 in parallel thread
+    // process conv1 or slotD in parallel thread
     _bufb = bufb;
-    if (!_execute.load(std::memory_order_acquire) && conv1.is_runnable()) {
+    if (!_execute.load(std::memory_order_acquire) && (conv1.is_runnable() || 
+                                _neuralD.load(std::memory_order_acquire))) {
         if (pro.getProcess()) {
             pro.runProcess();
         } else {
@@ -558,12 +608,18 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         }
     }
 
-    // process conv
-    if (!_execute.load(std::memory_order_acquire) && conv.is_runnable())
-        conv.compute(n_samples, bufa, bufa);
+    // process conv or slotC
+    if (!_execute.load(std::memory_order_acquire)) {
+        if (_neuralC.load(std::memory_order_acquire)) {
+            slotC.compute(n_samples, bufa, bufa);
+        } else if (conv.is_runnable()) {
+            conv.compute(n_samples, bufa, bufa);
+        }
+    }
 
     // wait for parallel processed conv1 when needed
-    if (!_execute.load(std::memory_order_acquire) && conv1.is_runnable()) {
+    if (!_execute.load(std::memory_order_acquire) && (conv1.is_runnable() ||
+                                _neuralD.load(std::memory_order_acquire))) {
         if (!pro.processWait()) {
             XrunCounter += 1;
             _notify_ui.store(true, std::memory_order_release);
@@ -587,16 +643,26 @@ inline void Engine::processDsp(uint32_t n_samples, float* output, float* output1
         // mix output when needed
         double fSlow7 = 0.0010000000000000009 * std::pow(1e+01, 0.05 * double(MasterOutGain));
         if ((!_execute.load(std::memory_order_acquire) &&
-                conv.is_runnable()) && conv1.is_runnable()) {
+                (conv.is_runnable() ||_neuralC.load(std::memory_order_acquire)) &&
+                (conv1.is_runnable() ||_neuralD.load(std::memory_order_acquire)))) {
+            if (_neuralC.load(std::memory_order_acquire) || _neuralD.load(std::memory_order_acquire)) {
+                // process phase correction
+                if (phaseOffset) {
+                    if (phaseOffset < 0) pdelay->compute(n_samples, bufa, bufa); // slotC
+                    else pdelay->compute(n_samples, bufb, bufb);  // slotD
+                }
+            }
             double fSlow6 = 0.0010000000000000009 * double(IRmix);
             for (uint32_t i0 = 0; i0 < n_samples; i0 = i0 + 1) {
                 fRec6[0] = fSlow6 + 0.999 * fRec6[1];
                 output[i0] = bufa[i0] * (1.0 - fRec6[0]) + bufb[i0] * fRec6[0];
                 fRec6[1] = fRec6[0];
             }
-        } else if (!_execute.load(std::memory_order_acquire) && conv.is_runnable()) {
+        } else if (!_execute.load(std::memory_order_acquire) && (conv.is_runnable() ||
+                                            _neuralC.load(std::memory_order_acquire)) ) {
             memcpy(output, bufa, n_samples*sizeof(float));
-        } else if (!_execute.load(std::memory_order_acquire) && conv1.is_runnable()) {
+        } else if (!_execute.load(std::memory_order_acquire) && (conv1.is_runnable() ||
+                                            _neuralD.load(std::memory_order_acquire)) ) {
             memcpy(output, bufb, n_samples*sizeof(float));
         }
         // MasterOutGain

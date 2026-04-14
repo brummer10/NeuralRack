@@ -10,7 +10,7 @@ private:
 	uint32_t fSampleRate;
 	int IOTA0;
 	double fVec0[16384];
-	float *fHslider0_;
+	float  fHslider0;
 	double fRec4[2];
 	double fRec0[2];
 	double fRec1[2];
@@ -19,8 +19,7 @@ private:
 
 
 public:
-	float delay;
-	void connect(uint32_t port,void* data);
+	void set(int value);
 	void del_instance(Dsp *p);
 	void clear_state_f();
 	void init(uint32_t sample_rate);
@@ -49,13 +48,13 @@ inline void Dsp::clear_state_f()
 inline void Dsp::init(uint32_t sample_rate)
 {
 	fSampleRate = sample_rate;
-	delay = 0.0;
+	fHslider0 = 0.0;
 	clear_state_f();
 }
 
 void Dsp::compute(int count, float *input0, float *output0)
 {
-	double fSlow0 = 0.0001000000000000009 * std::fabs(delay);
+	double fSlow0 = 0.0001000000000000009 * std::abs(fHslider0);
 	for (int i0 = 0; i0 < count; i0 = i0 + 1) {
 		double fTemp0 = double(input0[i0]);
 		fVec0[IOTA0 & 16383] = fTemp0;
@@ -76,16 +75,9 @@ void Dsp::compute(int count, float *input0, float *output0)
 	}
 }
 
-void Dsp::connect(uint32_t port,void* data)
+void Dsp::set(int value)
 {
-	switch (port)
-	{
-	case 8: 
-		fHslider0_ = static_cast<float*>(data); // , 0.0, -4096.0, 4096.0, 12.0 
-		break;
-	default:
-		break;
-	}
+    fHslider0 = static_cast<float>(value); // , 0.0, -4096.0, 4096.0, 12.0 
 }
 
 Dsp *plugin() {

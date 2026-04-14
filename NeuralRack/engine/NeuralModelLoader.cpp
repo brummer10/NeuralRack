@@ -72,7 +72,41 @@ void NeuralModelLoader::normalize(uint32_t count, float *buf) {
 }
 
 int NeuralModelLoader::getPhaseOffset() {
-    return phaseOffset;
+
+    if (model) {
+        int32_t size = 8192;
+        int maxDelay = 512;
+        float bestCorr = -1e30f;
+
+        float* buffer = new float[size];
+        memset(buffer, 0, size * sizeof(float));
+        float* outbuffer = new float[size];
+        memset(outbuffer, 0, size * sizeof(float));
+        
+        for (int i = 0; i < size; ++i) {
+            buffer[i] = sin(2.0 * M_PI * 1000.0f * i / modelSampleRate);
+        }
+
+        model->Prewarm();
+        model->Process(buffer, outbuffer, size);
+        model->Prewarm();
+
+        for (int delay = 0; delay < maxDelay; ++delay) {
+            float corr = 0.0f;
+            for (int i = 0; i < size - delay; ++i) {
+                corr += buffer[i] * outbuffer[i + delay];
+            }
+            if (corr > bestCorr) {
+                bestCorr = corr;
+                phaseOffset = delay;
+            }
+        }
+        delete[] buffer;
+        delete[] outbuffer;
+
+        return phaseOffset;
+    }
+    return 0;
 }
 
 void NeuralModelLoader::compute(uint32_t count, float *input0, float *output0) {
@@ -141,7 +175,6 @@ bool NeuralModelLoader::loadModel() {
         needResample = 0;
         phaseOffset = 0;
         //clearState();
-        int32_t warmUpSize = 4096;
         try {
             model = NeuralAudio::NeuralModel::CreateFromFile(std::string(modelFile));
         } catch (const std::exception&) {
@@ -163,25 +196,8 @@ bool NeuralModelLoader::loadModel() {
                 toStream.setup(1, 8196, modelSampleRate, fSampleRate);
                 needResample = 1;
             }
-            float* buffer = new float[warmUpSize];
-            memset(buffer, 0, warmUpSize * sizeof(float));
-            float angle = 0.0;
-            for(int i=0;i<2048;i++){
-                buffer[i] = sin(angle);
-                angle += (2 * 3.14159365) / 2048;
-            }
-
-            model->Process(buffer, buffer, warmUpSize);
-
-            for(int i=0;i<2048;i++){
-                if (!std::signbit(buffer[i+1]) != !std::signbit(buffer[i])) {
-                    phaseOffset = i;
-                    break;
-                }
-            }
-
-            delete[] buffer;
             model->Prewarm();
+            //fprintf(stderr, "phaseOffset = %i\n", phaseOffset);
             //fprintf(stderr, "sample rate = %i file = %i l = %f\n",fSampleRate, modelSampleRate, loudness);
             //fprintf(stderr, "%s\n", load_file.c_str());
         }

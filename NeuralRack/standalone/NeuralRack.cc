@@ -145,6 +145,9 @@ public:
         ModelMenu = menu_add_entry(OptionMenu, "Tone3000 Impulse Responses");
         ModelMenu->parent_struct = (void*)this;
         ModelMenu->func.button_release_callback = check_irs_callback;
+        ModelMenu = menu_add_entry(OptionMenu, "Tone3000 Outboard Profiles");
+        ModelMenu->parent_struct = (void*)this;
+        ModelMenu->func.button_release_callback = check_outboard_callback;
 
         getPresets(ui);
         widget_show_all(TopWin);
@@ -177,6 +180,10 @@ public:
         engine.peq->fVslider5 =  -20.0;
         engine.ngate->threshold = -0.017;
         engine.ngOnOff = 0;
+    }
+
+    void setSampleRate(uint32_t rate) {
+        engine.setSampleRate(rate);
     }
 
     void initEngine(uint32_t rate, int32_t prio, int32_t policy) {
@@ -323,48 +330,35 @@ public:
     }
 
     // send a file name from GUI to the engine
-    void sendFileName(ModelPicker* m, int old) {
-        X11_UI_Private_t *ps = (X11_UI_Private_t*)ui->private_ptr;
-        if ((strcmp(m->filename, "None") == 0)) {
-            if (old == 1) {
-                if ( m == &ps->ma) {
+    void sendFileName(ModelPicker* m) {
+        if ((strcmp(m->filename, "None") == 0) || ends_with(m->filename, "nam") ||
+                ends_with(m->filename, "json") || ends_with(m->filename, "aidax") ||
+                ends_with(m->filename, "wav") || ends_with(m->filename, "WAV")) {
+
+            int model = m->model;
+            switch(model) {
+                case 1:
                     engine.model_file = m->filename;
                     engine._ab.fetch_add(1, std::memory_order_relaxed);
-                } else {
+                break;
+                case 2:
                     engine.model_file1 = m->filename;
                     engine._ab.fetch_add(2, std::memory_order_relaxed);
-                }
-            } else if (old == 2) {
-                if ( m == &ps->ir) {
+                break;
+                case 3:
                     engine.ir_file = m->filename;
                     engine._cd.fetch_add(1, std::memory_order_relaxed);
-                } else {
+                break;
+                case 4:
                     engine.ir_file1 = m->filename;
                     engine._cd.fetch_add(2, std::memory_order_relaxed);
-                }
-            } else return;
-        } else if (ends_with(m->filename, "nam") ||
-                   ends_with(m->filename, "json") ||
-                   ends_with(m->filename, "aidax")) {
-            if ( m == &ps->ma) {
-                engine.model_file = m->filename;
-                engine._ab.fetch_add(1, std::memory_order_relaxed);
-            } else {
-                engine.model_file1 = m->filename;
-                engine._ab.fetch_add(2, std::memory_order_relaxed);
+                break;
+                default :
+                break;
             }
-        } else if (ends_with(m->filename, "wav")||
-                   ends_with(m->filename, "WAV") ) {
-            if ( m == &ps->ir) {
-                engine.ir_file = m->filename;
-                engine._cd.fetch_add(1, std::memory_order_relaxed);
-            } else {
-                engine.ir_file1 = m->filename;
-                engine._cd.fetch_add(2, std::memory_order_relaxed);
-            }
+            settingsHaveChanged = true;
+            workToDo.store(true, std::memory_order_release);
         } else return;
-        settingsHaveChanged = true;
-        workToDo.store(true, std::memory_order_release);
     }
 
     // load a saved preset
@@ -608,6 +602,13 @@ private:
         Widget_t *w = (Widget_t*)w_;
         if (w->flags & HAS_POINTER){
             openSite("\'https://www.tone3000.com/search?gear=ir&order=newest\'");
+        }
+    }
+
+    static void check_outboard_callback(void *w_, void* item_, void* user_data) {
+        Widget_t *w = (Widget_t*)w_;
+        if (w->flags & HAS_POINTER){
+            openSite("\'https://www.tone3000.com/search?gear=outboard&order=newest\'");
         }
     }
 

@@ -83,21 +83,10 @@ static void file_load_response(void *w_, void* user_data) {
     Widget_t *p = (Widget_t*)w->parent;
     X11_UI *ui = (X11_UI*) p->parent_struct;
     if(user_data !=NULL) {
-        int old = 0;
-        if (ends_with(m->filename, "nam") ||
-                ends_with(m->filename, "json") ||
-                ends_with(m->filename, "aidax")) {
-            old = 1;
-        } else if (ends_with(m->filename, "wav") ||
-                   ends_with(m->filename, "WAV") ) {
-            old = 2;
-        }
         free(m->filename);
         m->filename = NULL;
         m->filename = strdup(*(const char**)user_data);
-
-        sendFileName(ui, m, old);
-
+        sendFileName(ui, m);
         free(m->filename);
         m->filename = NULL;
         m->filename = strdup("None");
@@ -164,6 +153,10 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ps->mb.dir_name = NULL;
     ps->ir.dir_name = NULL;
     ps->ir1.dir_name = NULL;
+    ps->ma.model = 1;
+    ps->mb.model = 2;
+    ps->ir.model = 3;
+    ps->ir1.model = 4;
     ps->fname = NULL;
     ps->ma.filepicker = (FilePicker*)malloc(sizeof(FilePicker));
     fp_init(ps->ma.filepicker, "/");
@@ -175,11 +168,11 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ps->mb.filepicker->use_filter = 1;
     ps->ir.filepicker = (FilePicker*)malloc(sizeof(FilePicker));
     fp_init(ps->ir.filepicker, "/");
-    asprintf(&ps->ir.filepicker->filter ,"%s", ".wav|.WAV");
+    asprintf(&ps->ir.filepicker->filter ,"%s", ".nam|.wav|.WAV");
     ps->ir.filepicker->use_filter = 1;
     ps->ir1.filepicker = (FilePicker*)malloc(sizeof(FilePicker));
     fp_init(ps->ir1.filepicker, "/");
-    asprintf(&ps->ir1.filepicker->filter ,"%s", ".wav|.WAV");
+    asprintf(&ps->ir1.filepicker->filter ,"%s", ".nam|.wav|.WAV");
     ps->ir1.filepicker->use_filter = 1;
 
     ui->widget[15] = add_lv2_slider (ui->widget[15], ui->win, 20, "Buffer", ui, 50,  12, 40, 40);

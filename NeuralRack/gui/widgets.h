@@ -35,6 +35,7 @@ typedef struct {
     FilePicker *filepicker;
     char *filename;
     char *dir_name;
+    int model;
 } ModelPicker;
 
 typedef struct {
@@ -79,7 +80,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri);
 void sendValueChanged(X11_UI *ui, int port, float value);
 
 // send a file name to the host
-void sendFileName(X11_UI *ui, ModelPicker* m, int old);
+void sendFileName(X11_UI *ui, ModelPicker* m);
 
 int ends_with(const char* name, const char* extension);
 
