@@ -25,11 +25,16 @@ For information the resulting latency will be shown on the GUI.
 NeuralRack supports resampling when needed to match the expected sample rate of the 
 loaded models. Both models and the IR Files may have different expectations regarding the sample rate.
 
-The IR loader module supports two different modes, default is "Stereo", that means it could load
-one IR file per channel, each channel have a gain controller. 
-The second mode is "Mix", that could load as well two IR files, but the output will be mixed together
-into a two channel mono stream. It have a "Mix" controller and a "Master" gain control. When only
-one IR file is loaded the "Mix" controller will do nothing and the IR file will be applied to both channels.
+The IR loader module supports two different modes. The default is "Stereo",
+which allows loading one IR file per channel, with an individual gain control for each channel.
+
+The second mode is "Mix". In this mode, two IR files can also be loaded,
+but their outputs are mixed together into a dual-channel mono stream.
+It provides a "Mix" control as well as a "Master" gain control.
+When only one IR file is loaded, the "Mix" control has no effect and the IR is applied equally to both channels.
+
+In addition to IR files, it is now also possible to load NAM files in the IR loader.
+This feature is primarily intended for so-called outboard profiles.
 
 ## Packaging Status
 
