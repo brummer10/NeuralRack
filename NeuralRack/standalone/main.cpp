@@ -21,6 +21,10 @@
 #include "xpa.h"
 #endif
 
+#if defined(__linux__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__OpenBSD__)
+#define IS_X11 1
+#endif
 
 #include "NeuralRack.cc"
 
@@ -65,8 +69,7 @@ static int process(const void* inputBuffer, void* outputBuffer,
 }
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(IS_X11)
 
 #if defined(HAVE_JACK)
 bool jack_available() {
@@ -120,21 +123,23 @@ int main(int argc, char *argv[]){
     }
 
 
-    #if defined(__linux__) || defined(__FreeBSD__) || \
-        defined(__NetBSD__) || defined(__OpenBSD__)
+    #if defined(IS_X11)
     #if defined(PAWPAW)
     setenv("FONTCONFIG_PATH", "/etc/fonts", true);
     #endif
     if(0 == XInitThreads()) 
         fprintf(stderr, "Warning: XInitThreads() failed\n");
     #endif
+
     #if defined(HAVE_PA)
     bool runPA = false;
     #endif
+
     r = new NeuralRack();
     r->startGui();
-    #if defined(__linux__) || defined(__FreeBSD__) || \
-        defined(__NetBSD__) || defined(__OpenBSD__)
+
+    #if defined(IS_X11)
+
     signal (SIGQUIT, signal_handler);
     signal (SIGTERM, signal_handler);
     signal (SIGHUP, signal_handler);
@@ -152,6 +157,7 @@ int main(int argc, char *argv[]){
         startAlsa();
     }
     #endif
+
     #else // windows
 
     #if defined(HAVE_PA)
@@ -167,16 +173,52 @@ int main(int argc, char *argv[]){
         r->setXPa(&xpa, xpa.haveASIO);
     }
     #endif
+
     #endif
 
     if (argc > 1) {
         r->loadPreset((*argv[1]) -'0');
     }
-
-    main_run(r->getMain());
+    r->showGui();
     
-    #if defined(__linux__) || defined(__FreeBSD__) || \
-        defined(__NetBSD__) || defined(__OpenBSD__)
+    #if defined(IS_X11)
+    Atom WM_DELETE_WINDOW = os_register_wm_delete_window(r->TopWin);
+    #else
+    MSG msg;
+    BOOL bRet;    
+    r->enableEngine(1);
+    #endif
+
+    r->pRun.store(true, std::memory_order_release);
+    int check = 1;
+    while (r->pRun.load(std::memory_order_acquire)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        check ^= 1;
+        #if defined(IS_X11)
+        XEvent xev;
+        if (XCheckTypedWindowEvent(r->getMain()->dpy, r->TopWin->widget, ClientMessage, &xev)){
+            if (xev.xclient.data.l[0] == (long int)WM_DELETE_WINDOW) {
+                r->quitGui();
+            }
+        }
+        if (check) r->runGui();
+        os_run_embedded(r->getMain());
+        #else
+        if (check) r->runGui();
+        if((bRet = GetMessage(&msg, NULL, 0, 0) > 0)) {
+            if ((bRet == -1) || (msg.message == WM_CLOSE)) {
+                r->quitGui();
+            } else if(msg.message == WM_SYSCOMMAND) {
+                if (msg.wParam == SC_CLOSE) r->quitGui();
+            } else {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+        #endif
+    }
+    
+    #if defined(IS_X11)
 
     #if defined(HAVE_ALSA)
     if (!haveJack) quitAlsa();
@@ -186,9 +228,11 @@ int main(int argc, char *argv[]){
     #endif
 
     #else // windows
+
     #if defined(HAVE_PA)
     if (runPA) xpa.stopStream();
     #endif
+
     #endif
 
     r->cleanup();

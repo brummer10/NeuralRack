@@ -63,9 +63,9 @@ public:
 
     // open a audio stream for input/output channels and set the audio process callback
     bool openStream(uint32_t ichannels, uint32_t ochannels, PaStreamCallback *process_, void* arg) {
+        process = process_;
         #if defined(__linux__) || defined(__FreeBSD__) || \
             defined(__NetBSD__) || defined(__OpenBSD__)
-        process = process_;
         std::vector<Devices> devices;
         int d = Pa_GetDeviceCount();
         const PaDeviceInfo *info;

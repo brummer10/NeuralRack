@@ -99,11 +99,11 @@ int ends_with(const char* name, const char* extension) {
 }
 
 void sendFileName(X11_UI *ui, ModelPicker* m) {
-    LV2_URID urid;
     if ((strcmp(m->filename, "None") == 0) || ends_with(m->filename, "nam") ||
             ends_with(m->filename, "json") || ends_with(m->filename, "aidax") ||
             ends_with(m->filename, "wav") || ends_with(m->filename, "WAV")) {
 
+        LV2_URID urid = ui->itf.uris.atom_Object;
         int model = m->model;
         switch(model) {
             case 1:

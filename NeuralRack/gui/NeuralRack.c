@@ -179,12 +179,15 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     set_adjustment(ui->widget[15]->adj, 0.0, 0.0, 0.0, 2.0, 1.0, CL_CONTINUOS);
 
     ui->widget[16] = add_lv2_label (ui->widget[16], ui->win, 22, "Latency", ui, 90,  22, 130, 30);
-    ui->widget[17] = add_lv2_label (ui->widget[17], ui->win, 23, "Xrun", ui, 410,  22, 100, 30);
+    ui->widget[17] = add_lv2_label (ui->widget[17], ui->win, 23, "Xrun", ui, 410,  22, 95, 30);
 
     ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "Enable", ui, 505,  12, 50, 50);
 
     ui->glowY = 0;
     vsg_init(&ui->g, ui->win, 10, 130, 0, &ui->glowY);
+    #ifdef _WIN32
+    ui->g.animateOnAdd = 0;
+    #endif
 
 // noisegate
     ui->elem[4] = create_widget(&ui->main, ui->win, 10, 60, 600, 70);

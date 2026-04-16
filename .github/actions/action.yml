@@ -121,7 +121,7 @@ runs:
     # setup build cache
     - name: Setup build cache
       if: ${{ inputs.pawpaw == 'true' }}
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         path: ~/PawPawBuilds
         key: pawpaw-${{ inputs.target }}-v${{ env.PAWPAW_CACHE_VERSION }}-${{ inputs.lto }}
@@ -220,7 +220,7 @@ runs:
     # install faust (optional)
     - name: Cache faust debs
       if: ${{ inputs.faust == 'true' && runner.os == 'Linux' }}
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         path: ~/faustdebs
         key: faustdebs
@@ -543,21 +543,21 @@ runs:
     # upload artifacts (action)
     - name: Upload artifacts (Linux)
       if: ${{ startsWith(inputs.target, 'linux') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.ARTIFACT_BASENAME }}
         path: |
           bin/*
     - name: Upload artifacts (macOS)
       if: ${{ startsWith(inputs.target, 'macos') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.ARTIFACT_BASENAME }}
         path: |
           ${{ env.ARTIFACT_BASENAME }}.*
     - name: Upload artifacts (Windows)
       if: ${{ startsWith(inputs.target, 'win') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.ARTIFACT_BASENAME }}
         path: |

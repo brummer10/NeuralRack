@@ -34,11 +34,13 @@ class NeuralRack : public TextEntry
 {
 public:
     Widget_t*               TopWin;
+    std::atomic<bool>       pRun;
     #if defined(HAVE_PA)
     XPa*                    xpa;
     #endif
 
     NeuralRack() : engine() {
+        pRun.store(false, std::memory_order_release);
         workToDo.store(false, std::memory_order_release);
         presetToLoad.store(false, std::memory_order_release);
         settingsHaveChanged = false;
@@ -66,7 +68,6 @@ public:
 
     ~NeuralRack() {
         PresetListNames.clear();
-        fetch.stop();
         free(ui->private_ptr);
         free(ui);
         //cleanup();
@@ -150,11 +151,18 @@ public:
         ModelMenu->func.button_release_callback = check_outboard_callback;
 
         getPresets(ui);
-        widget_show_all(TopWin);
     }
 
     Xputty *getMain() {
         return &ui->main;
+    }
+
+    void showGui() {
+        widget_show_all(TopWin);
+    }
+
+    void runGui() {
+        checkEngine();
     }
 
     void quitGui() {
@@ -163,6 +171,7 @@ public:
         XLockDisplay(ui->main.dpy);
         #endif
         destroy_widget(TopWin, &ui->main);
+        pRun.store(false, std::memory_order_release);
          #if defined(__linux__) || defined(__FreeBSD__) || \
             defined(__NetBSD__) || defined(__OpenBSD__)
         XFlush(ui->main.dpy);
@@ -190,8 +199,6 @@ public:
         engine.init(rate, prio, policy);
         initEQ();
         s_time = (1.0 / (double)rate) * 1000;
-        fetch.startTimeout(120);
-        fetch.set<NeuralRack, &NeuralRack::checkEngine>(this);
     }
 
     void enableEngine(int on) {
@@ -456,7 +463,6 @@ public:
     }
 
     void cleanup() {
-        fetch.stop();
         if (settingsHaveChanged)
             saveConfig();
         connections.clear();
@@ -466,7 +472,6 @@ public:
     }
 
 private:
-    ParallelThread          fetch;
     X11_UI*                 ui;
     neuralrack::Engine      engine;
     Widget_t*               PresetLoadMenu;
@@ -938,6 +943,7 @@ private:
 
             writePreset(&outfile, "Default");
             outfile.close();
+            settingsHaveChanged = false;
         }
     }
 
@@ -988,17 +994,8 @@ private:
 
     // timeout loop to check output ports from engine
     void checkEngine() {
-        #if defined(__linux__) || defined(__FreeBSD__) || \
-            defined(__NetBSD__) || defined(__OpenBSD__)
-        XLockDisplay(ui->main.dpy);
-        #endif
         vsg_update(&ui->g, 1.0f / 60.0f);
         if(ui->g.newIndex != engine.eqPos) engine.setEQPos(ui->g.newIndex);
-        #if defined(__linux__) || defined(__FreeBSD__) || \
-            defined(__NetBSD__) || defined(__OpenBSD__)
-        XFlush(ui->main.dpy);
-        XUnlockDisplay(ui->main.dpy);
-        #endif        
         if (workToDo.load(std::memory_order_acquire)) {
             if (engine.xrworker.getProcess() && 
                     !engine._execute.exchange(true, std::memory_order_acq_rel)) {
@@ -1007,10 +1004,6 @@ private:
             }
         } else if (engine._notify_ui.load(std::memory_order_acquire)) {
             engine._notify_ui.store(false, std::memory_order_release);
-            #if defined(__linux__) || defined(__FreeBSD__) || \
-                defined(__NetBSD__) || defined(__OpenBSD__)
-            XLockDisplay(ui->main.dpy);
-            #endif
             X11_UI_Private_t *ps = (X11_UI_Private_t*)ui->private_ptr;
             get_file(engine.model_file, &ps->ma);
             get_file(engine.model_file1, &ps->mb);
@@ -1021,25 +1014,11 @@ private:
             expose_widget(ui->win);
             engine._ab.store(0, std::memory_order_release);
             engine._cd.store(0, std::memory_order_release);
-            #if defined(__linux__) || defined(__FreeBSD__) || \
-                defined(__NetBSD__) || defined(__OpenBSD__)
-            XFlush(ui->main.dpy);
-            XUnlockDisplay(ui->main.dpy);
-            #endif
         }
         if (presetToLoad.load(std::memory_order_acquire)) {
             presetToLoad.store(false, std::memory_order_release);
             if (lPreset.compare(currentPreset) != 0) {
-                #if defined(__linux__) || defined(__FreeBSD__) || \
-                    defined(__NetBSD__) || defined(__OpenBSD__)
-                XLockDisplay(ui->main.dpy);
-                #endif
                 readPreset(lPreset);
-                #if defined(__linux__) || defined(__FreeBSD__) || \
-                    defined(__NetBSD__) || defined(__OpenBSD__)
-                XFlush(ui->main.dpy);
-                XUnlockDisplay(ui->main.dpy);
-                #endif
             }
         }
     }
