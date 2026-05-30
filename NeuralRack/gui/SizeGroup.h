@@ -122,7 +122,7 @@ static inline void vsg_relayout(VerticalSizeGroup* g) {
         Widget_t* w = g->entries[i];
 
         int ty = y;
-        int fy = w->scale.init_y;
+        int fy = w->scale.init_y / w->scale.cscale_y;
 
         if ((g->animateOnAdd && i>=g->from && i<g->to) || g->animationInit) {
             if (g->from==0 && g->to==g->entryCount) {
@@ -146,7 +146,7 @@ static inline void vsg_relayout(VerticalSizeGroup* g) {
             os_move_window(dpy,w,w->scale.init_x,ty);
         }
 
-        w->scale.init_y = ty;
+        w->scale.init_y = ty * w->scale.cscale_y;
         y += w->height + g->spacingY;
     }
     g->animationInit = 0;
@@ -182,7 +182,7 @@ static inline int vsg_findDropIndex(VerticalSizeGroup* g) {
     for (int i=0;i<g->entryCount;i++) {
         Widget_t* w = g->entries[i];
 
-        int cy = w->scale.init_y;
+        int cy = w->scale.init_y / w->scale.cscale_y;
         int dy = abs(g->wmy - cy);
         if (dy < bestDist) {
             best = i;
@@ -190,7 +190,7 @@ static inline int vsg_findDropIndex(VerticalSizeGroup* g) {
 
             if (i > g->oldIndex)
                 cy += w->height + g->spacingY;
-            *g->glowY = cy - g->spacingY/2;
+            *g->glowY = (cy * w->scale.cscale_y) - g->spacingY/2;
         }
     }
     return best;
@@ -207,7 +207,7 @@ static inline void vsg_beginDrag(VerticalSizeGroup* g,Widget_t* w,int my) {
 static inline void vsg_dragMove(VerticalSizeGroup* g,int my) {
     if (!g->dragWidget) return;
 
-    g->wmy = g->dragWidget->scale.init_y + my - g->dragOffsetY;
+    g->wmy = g->dragWidget->scale.init_y / g->dragWidget->scale.cscale_y  + my - g->dragOffsetY;
     os_move_window(g->parent->app->dpy,
                    g->dragWidget,
                    g->dragWidget->scale.init_x,

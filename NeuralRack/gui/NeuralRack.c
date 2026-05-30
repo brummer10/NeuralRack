@@ -137,11 +137,18 @@ const char* plugin_set_name() {
     return "Neural Rack"; //set plugin name to display on UI
 }
 
+static void resize_callback(void *w_, void* user_data) {
+    Widget_t *w = (Widget_t*)w_;
+    X11_UI *ui = (X11_UI*) w->parent_struct;
+    ui->g.startY = (130 * ui->main.hdpi) / w->scale.cscale_y;
+}
+
 void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
 
     ui->win->label = plugin_set_name();
     // connect the expose func
     ui->win->func.expose_callback = draw_window;
+    ui->win->func.configure_notify_callback = resize_callback;
 
     X11_UI_Private_t *ps =(X11_UI_Private_t*)malloc(sizeof(X11_UI_Private_t));
     ui->private_ptr = (void*)ps;
@@ -184,7 +191,7 @@ void plugin_create_controller_widgets(X11_UI *ui, const char * plugin_uri) {
     ui->widget[10] = add_lv2_switch (ui->widget[10], ui->win, 14, "Enable", ui, 505,  12, 50, 50);
 
     ui->glowY = 0;
-    vsg_init(&ui->g, ui->win, 10, 130, 0, &ui->glowY);
+    vsg_init(&ui->g, ui->win, 10, 130 * ui->main.hdpi, 0, &ui->glowY);
     #ifdef _WIN32
     ui->g.animateOnAdd = 0;
     #endif
