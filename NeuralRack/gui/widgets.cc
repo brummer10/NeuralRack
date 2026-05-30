@@ -441,8 +441,8 @@ static void draw_window(void *w_, void* user_data) {
         cairo_set_line_cap (w->crb, CAIRO_LINE_CAP_ROUND);
         cairo_set_source_rgba(w->crb, 0.55, 0.65, 0.55, 0.4);
         cairo_set_line_width(w->crb, 5);
-        cairo_move_to(w->crb, 20, ui->glowY);
-        cairo_line_to(w->crb, 600, ui->glowY);
+        cairo_move_to(w->crb, 20 * w->app->hdpi, ui->glowY);
+        cairo_line_to(w->crb, 600 * w->app->hdpi, ui->glowY);
         cairo_stroke(w->crb);
     }
 
