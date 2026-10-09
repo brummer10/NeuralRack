@@ -216,7 +216,11 @@ endif
 	VST3_INCLUDE := -I./engine/ -I./vst3/ -I./wrapper/vst3/travesty/ -I./wrapper/ -I./wrapper/vst3/ -I./plugdef/
 	VST3_SOURCES := $(VST3_DIR)NeuralRackVST3.cpp
 	ARCH = `echo $(UNAME_S) | tr A-Z a-z`
+ifeq ($(UNAME_S), FreeBSD)
+	VST3_BUNDLE := $(VST3_NAME).vst3/Contents/$(TARGET_ARCH)-$(ARCH)/
+else
 	VST3_BUNDLE := $(VST3_NAME).vst3/Contents/$(UNAME_M)-$(ARCH)/
+endif
 
 	LV2_PLUGIN := $(LV2_DIR)$(NAME)
 	LV2_GUI := $(GUI_DIR)$(NAME)
